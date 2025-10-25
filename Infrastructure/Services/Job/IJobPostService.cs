@@ -1,6 +1,4 @@
 using Core.DTOs;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 
 namespace Infrastructure.Services
 {

@@ -7,13 +7,14 @@ using Microsoft.EntityFrameworkCore;
 namespace Infrastructure.Services
 {
 
-    public class GallaryImageService : IGallaryImageService
+    public class GallaryImageService(IRepository<GallaryImage> repo) : IGallaryImageService
     {
-        private readonly IRepository<GallaryImage> _repo;
-        public GallaryImageService(IRepository<GallaryImage> repo) => _repo = repo;
+        private readonly IRepository<GallaryImage> _repo = repo;
 
         public async Task<GallaryImageDTO> CreateAsync(GallaryImageDTO dto)
         {
+
+            dto.CategoryId = dto.CategoryId != 0 ? dto.CategoryId : null;
             var entity = dto.Adapt<GallaryImage>();
             _repo.Insert(entity);
             await _repo.SaveChangesAsync();
@@ -45,6 +46,7 @@ namespace Infrastructure.Services
         {
             var e = await _repo.GetByIdAsync(id);
             if (e == null) return null;
+            dto.CategoryId = dto.CategoryId != 0 ? dto.CategoryId : null;
             dto.Adapt(e);
             _repo.Update(e);
             await _repo.SaveChangesAsync();

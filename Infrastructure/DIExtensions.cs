@@ -19,6 +19,4 @@ namespace Infrastructure
             return services;
         }
     }
-
-
 }

@@ -26,8 +26,8 @@ namespace API.Controllers
             var dto = await _service.GetByIdAsync(id);
             if (dto == null)
             {
-                var errors = new List<Error> { new Error { Message = "NotFound", Description = "Role not found." } };
-                return NotFound(Response<QXIRoleDTO>.Failue(errors, 404));
+                var errors = new List<Error> { };
+                return NotFound(Response<QXIRoleDTO>.Failure(new Error("NotFound", "Role not found."), 404));
             }
             return Ok(Response<QXIRoleDTO>.Success(dto, 200));
         }
@@ -37,8 +37,8 @@ namespace API.Controllers
         {
             if (dto == null)
             {
-                var errors = new List<Error> { new Error { Message = "BadRequest", Description = "Payload is null." } };
-                return BadRequest(Response<QXIRoleDTO>.Failue(errors, 400));
+                var errors = new List<Error> { };
+                return BadRequest(Response<QXIRoleDTO>.Failure(new Error("BadRequest", "Payload is null."), 400));
             }
 
             var created = await _service.CreateAsync(dto);
@@ -50,21 +50,21 @@ namespace API.Controllers
         {
             if (dto == null)
             {
-                var errors = new List<Error> { new Error { Message = "BadRequest", Description = "Payload is null." } };
-                return BadRequest(Response<QXIRoleDTO>.Failue(errors, 400));
+                var errors = new List<Error> { };
+                return BadRequest(Response<QXIRoleDTO>.Failure(new Error("BadRequest", "Payload is null."), 400));
             }
 
             if (dto.Id != 0 && dto.Id != id)
             {
-                var errors = new List<Error> { new Error { Message = "BadRequest", Description = "Id mismatch." } };
-                return BadRequest(Response<QXIRoleDTO>.Failue(errors, 400));
+                var errors = new List<Error> { };
+                return BadRequest(Response<QXIRoleDTO>.Failure(new Error("BadRequest", "Id mismatch."), 400));
             }
 
             var updated = await _service.UpdateAsync(id, dto);
             if (updated == null)
             {
-                var errors = new List<Error> { new Error { Message = "NotFound", Description = "Role not found." } };
-                return NotFound(Response<QXIRoleDTO>.Failue(errors, 404));
+                var errors = new List<Error> { };
+                return NotFound(Response<QXIRoleDTO>.Failure(new Error("NotFound", "Role not found."), 404));
             }
 
             return Ok(Response<QXIRoleDTO>.Success(updated, 200));
@@ -76,8 +76,8 @@ namespace API.Controllers
             var removed = await _service.DeleteAsync(id);
             if (!removed)
             {
-                var errors = new List<Error> { new Error { Message = "NotFound", Description = "Role not found." } };
-                return NotFound(Response<object>.Failue(errors, 404));
+                var errors = new List<Error> { };
+                return NotFound(Response<object>.Failure(new Error("NotFound", "Role not found."), 404));
             }
 
             return StatusCode(204, Response<object>.Success(null, 204));

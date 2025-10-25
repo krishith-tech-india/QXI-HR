@@ -1,8 +1,8 @@
 ﻿namespace Core.DTOs.Common
 {
-    public class Error
+    public class Error(string message, string description = "")
     {
-        public string Message { get; set; }
-        public string Description { get; set; }
+        public string Message { get; set; } = message;
+        public string Description { get; set; } = description;
     }
 }

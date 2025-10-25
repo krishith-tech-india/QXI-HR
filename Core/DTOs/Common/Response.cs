@@ -4,7 +4,6 @@
     {
         public T? Data { get; set; }
 
-
         public static Response<T> Success(T data, int statusCode)
         {
             return new Response<T>
@@ -15,7 +14,7 @@
             };
         }
 
-        public static Response<T> Failue(List<Error> errors, int statusCode)
+        public static Response<T> Failure(List<Error> errors, int statusCode)
         {
             return new Response<T>
             {
@@ -23,6 +22,11 @@
                 StatusCode = statusCode,
                 IsSuccess = false
             };
+        }
+
+        public static Response<T> Failure(Error error, int statusCode)
+        {
+            return Response<T>.Failure([error], statusCode);
         }
     }
 }

@@ -6,10 +6,10 @@ namespace Core.DTOs.Identity
     {
         [MaxLength(200, ErrorMessage = $"{nameof(FullName)} Must be a non empty string less than 200 characters long.")]
         public string? FullName { get; set; } = null!;
-        
+
         [MaxLength(100, ErrorMessage = $"{nameof(FirstName)} should less than 100 characters long.")]
         public string? FirstName { get; set; } = null!;
-        
+
         [MaxLength(100, ErrorMessage = $"{nameof(LastName)} should less than 100 characters long.")]
         public string? LastName { get; set; } = null!;
 

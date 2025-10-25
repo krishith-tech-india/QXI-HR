@@ -17,7 +17,7 @@ namespace Data.Models.Identity
 
         [StringLength(500)]
         public string Description { get; set; }
-        
+
         public virtual ICollection<QXIUserRole> UserRoles { get; set; } = new List<QXIUserRole>();
     }
 }

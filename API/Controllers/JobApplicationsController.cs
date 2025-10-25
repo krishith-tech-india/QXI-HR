@@ -26,8 +26,8 @@ namespace API.Controllers
             var dto = await _service.GetByIdAsync(id);
             if (dto == null)
             {
-                var errors = new List<Error> { new Error { Message = "NotFound", Description = "JobApplication not found." } };
-                return NotFound(Response<JobApplicationDTO>.Failue(errors, 404));
+                var errors = new List<Error> { };
+                return NotFound(Response<JobApplicationDTO>.Failure(new Error("NotFound", "JobApplication not found."), 404));
             }
             return Ok(Response<JobApplicationDTO>.Success(dto, 200));
         }
@@ -44,8 +44,8 @@ namespace API.Controllers
         {
             if (dto == null)
             {
-                var errors = new List<Error> { new Error { Message = "BadRequest", Description = "Payload is null." } };
-                return BadRequest(Response<JobApplicationDTO>.Failue(errors, 400));
+                var errors = new List<Error> { };
+                return BadRequest(Response<JobApplicationDTO>.Failure(new Error("BadRequest", "Payload is null."), 400));
             }
 
             var created = await _service.CreateAsync(dto);
@@ -57,24 +57,24 @@ namespace API.Controllers
         {
             if (dto == null)
             {
-                var errors = new List<Error> { new Error { Message = "BadRequest", Description = "Payload is null." } };
-                return BadRequest(Response<JobApplicationDTO>.Failue(errors, 400));
+                var errors = new List<Error> { };
+                return BadRequest(Response<JobApplicationDTO>.Failure(new Error("BadRequest", "Payload is null."), 400));
             }
 
             if (dto.Id != 0 && dto.Id != id)
             {
-                var errors = new List<Error> { new Error { Message = "BadRequest", Description = "Id mismatch." } };
-                return BadRequest(Response<JobApplicationDTO>.Failue(errors, 400));
+                var errors = new List<Error> { };
+                return BadRequest(Response<JobApplicationDTO>.Failure(new Error("BadRequest", "Id mismatch."), 400));
             }
 
             var updated = await _service.UpdateAsync(id, dto);
             if (updated == null)
             {
-                var errors = new List<Error> { new Error { Message = "NotFound", Description = "JobApplication not found." } };
-                return NotFound(Response<JobApplicationDTO>.Failue(errors, 404));
+                var errors = new List<Error> { };
+                return NotFound(Response<JobApplicationDTO>.Failure(new Error("NotFound", "JobApplication not found."), 404));
             }
 
-            return Ok(Response<JobApplicationDTO>.Success(updated, 200));
+            return StatusCode(200, Response<JobApplicationDTO>.Success(updated, 200));
         }
 
         [HttpDelete("{id:int}")]
@@ -83,11 +83,11 @@ namespace API.Controllers
             var removed = await _service.DeleteAsync(id);
             if (!removed)
             {
-                var errors = new List<Error> { new Error { Message = "NotFound", Description = "JobApplication not found." } };
-                return NotFound(Response<object>.Failue(errors, 404));
+                var errors = new List<Error> { };
+                return NotFound(Response<object>.Failure(new Error("NotFound", "JobApplication not found."), 404));
             }
 
-            return StatusCode(204, Response<object>.Success(null, 204));
+            return StatusCode(200, Response<object>.Success(id, 200));
         }
     }
 }

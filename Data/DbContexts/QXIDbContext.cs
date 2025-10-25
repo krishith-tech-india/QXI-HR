@@ -14,9 +14,9 @@ namespace Data.DbContexts
         public virtual DbSet<QXIUserRole> UserRoles { get; set; }
 
         public virtual DbSet<JobPost> JobPosts { get; set; }
-        
+
         public virtual DbSet<GallaryImage> GallaryImages { get; set; }
-        
+
         public virtual DbSet<ImageCategory> ImageCategories { get; set; }
 
         public virtual DbSet<JobApplication> JobApplications { get; set; }
@@ -67,7 +67,7 @@ namespace Data.DbContexts
                       .HasForeignKey(ur => ur.RoleId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
-            
+
             modelBuilder.Entity<ImageCategory>(entity =>
             {
                 entity.HasKey(e => e.Id);

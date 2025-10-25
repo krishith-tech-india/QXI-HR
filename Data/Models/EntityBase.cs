@@ -7,7 +7,7 @@ namespace Data.Models
 
         [DataType(DataType.DateTime)]
         public DateTime? CreatedAt { get; set; }
-        
+
         [DataType(DataType.DateTime)]
         public DateTime? UpdatedAt { get; set; }
 
