@@ -1,4 +1,5 @@
 using Core.DTOs;
+using Core.DTOs.Common;
 using Data.Models;
 using Data.Reopsitories;
 using Mapster;
@@ -48,6 +49,12 @@ namespace Infrastructure.Services
             _repo.Update(e);
             await _repo.SaveChangesAsync();
             return e.Adapt<QXIUserDTO>();
+        }
+
+        public async Task<QXIUserDTO?> AuthenticateUser(AuthRequestDto auth)
+        {
+            var user = await _repo.Query(u => u.Email.Equals(auth.UsernameOrEmail) && u.Password.Equals(auth.Password), false).Include(u => u.UserRoles).ThenInclude(ur => ur.Role).FirstOrDefaultAsync();
+            return user?.Adapt<QXIUserDTO>();
         }
     }
 
