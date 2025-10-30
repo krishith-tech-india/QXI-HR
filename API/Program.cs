@@ -69,29 +69,6 @@ builder.Services.AddSwaggerGen(opt =>
                 });
 });
 
-var jwtSettings = builder.Configuration.GetSection("Jwt");
-var key = Encoding.ASCII.GetBytes(jwtSettings["Key"] ?? "");
-var issuer = jwtSettings["Issuer"]?.ToString();
-var audiences = appSettings?.ClientList;
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = issuer,
-        ValidAudiences = audiences,
-        IssuerSigningKey = new SymmetricSecurityKey(key)
-    };
-});
 
 builder.Services.AddAuthorization();
 
