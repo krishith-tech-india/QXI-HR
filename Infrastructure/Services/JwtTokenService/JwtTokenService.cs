@@ -18,7 +18,7 @@ public class JwtTokenService: IJwtTokenService
         _config = config;
     }
 
-    public AuthRespDto GenerateToken(string username, Roles role)
+    public AuthRespDto GenerateToken(string username, params Roles[] roles)
     {
         var jwtSettings = _config.GetSection("Jwt");
         var key = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSettings["Key"]));
@@ -26,8 +26,12 @@ public class JwtTokenService: IJwtTokenService
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.Name, username),
-            new Claim(ClaimTypes.Role, role.ToString())
         };
+
+        foreach (var role in roles)
+        {
+            new Claim(ClaimTypes.Role, role.ToString());
+        }
 
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -39,6 +43,6 @@ public class JwtTokenService: IJwtTokenService
             signingCredentials: creds
         );
 
-        return new AuthRespDto { Token = new JwtSecurityTokenHandler().WriteToken(token), Role = role.ToString() };
+        return new AuthRespDto { Token = new JwtSecurityTokenHandler().WriteToken(token), Role = roles.ToString() };
     }
 }

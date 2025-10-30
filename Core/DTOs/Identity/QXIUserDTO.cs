@@ -11,12 +11,6 @@ namespace Core.DTOs
         public string PhoneNumber { get; set; } = null!;
         public string Position { get; set; } = null!;
         public string ProfilePictureUrl { get; set; } = null!;
-        public ICollection<QXIUserRoleDTO>? UserRoles { get; set; }
-    }
-
-    public class QXIUserRoleDTO
-    {
-        public int UserId { get; set; }
-        public int RoleId { get; set; }
+        public ICollection<QXIRoleDTO>? Roles { get; set; }
     }
 }

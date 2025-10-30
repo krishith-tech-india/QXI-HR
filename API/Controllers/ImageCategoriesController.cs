@@ -1,8 +1,8 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Core.DTOs;
 using Core.DTOs.Common;
+using Core.Enums;
 using Infrastructure.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
@@ -16,14 +16,14 @@ namespace API.Controllers
         public ImageCategoriesController(IImageCategoryService service) => _service = service;
 
         [HttpGet]
-        public async Task<ActionResult<Response<IEnumerable<ImageCategoryDTO>>>> GetAll()
+        public async Task<IActionResult> GetAll()
         {
             var list = await _service.GetAllAsync();
             return StatusCode(StatusCodes.Status200OK, Response<IEnumerable<ImageCategoryDTO>>.Success(list, StatusCodes.Status200OK));
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<Response<ImageCategoryDTO>>> GetById(int id)
+        public async Task<IActionResult> GetById(int id)
         {
             var dto = await _service.GetByIdAsync(id);
             if (dto == null)
@@ -33,8 +33,9 @@ namespace API.Controllers
             return StatusCode(StatusCodes.Status200OK, Response<ImageCategoryDTO>.Success(dto, StatusCodes.Status200OK));
         }
 
+        [Authorize(Roles = $"{nameof(Roles.Admin)}")]
         [HttpPost]
-        public async Task<ActionResult<Response<ImageCategoryDTO>>> Create(ImageCategoryDTO dto)
+        public async Task<IActionResult> Create(ImageCategoryDTO dto)
         {
             if (dto == null)
             {
@@ -46,7 +47,7 @@ namespace API.Controllers
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult<Response<ImageCategoryDTO>>> Update(int id, ImageCategoryDTO dto)
+        public async Task<IActionResult> Update(int id, ImageCategoryDTO dto)
         {
             if (dto == null)
             {
@@ -68,7 +69,7 @@ namespace API.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        public async Task<ActionResult<Response<object>>> Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
             var removed = await _service.DeleteAsync(id);
             if (!removed)

@@ -14,14 +14,14 @@ namespace API.Controllers
         public JobApplicationsController(IJobApplicationService service) => _service = service;
 
         [HttpGet]
-        public async Task<ActionResult<Response<IEnumerable<JobApplicationDTO>>>> GetAll()
+        public async Task<IActionResult> GetAll()
         {
             var list = await _service.GetAllAsync();
             return StatusCode(StatusCodes.Status200OK, Response<IEnumerable<JobApplicationDTO>>.Success(list, StatusCodes.Status200OK));
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<Response<JobApplicationDTO>>> GetById(int id)
+        public async Task<IActionResult> GetById(int id)
         {
             var dto = await _service.GetByIdAsync(id);
             if (dto == null)
@@ -32,14 +32,14 @@ namespace API.Controllers
         }
 
         [HttpGet("ByJob/{jobPostId:int}")]
-        public async Task<ActionResult<Response<IEnumerable<JobApplicationDTO>>>> GetByJobPost(int jobPostId)
+        public async Task<IActionResult> GetByJobPost(int jobPostId)
         {
             var list = await _service.GetByJobPostIdAsync(jobPostId);
             return StatusCode(StatusCodes.Status200OK, Response<IEnumerable<JobApplicationDTO>>.Success(list, StatusCodes.Status200OK));
         }
 
         [HttpPost]
-        public async Task<ActionResult<Response<JobApplicationDTO>>> Create(JobApplicationDTO dto)
+        public async Task<IActionResult> Create(JobApplicationDTO dto)
         {
             if (dto == null)
             {
@@ -51,7 +51,7 @@ namespace API.Controllers
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult<Response<JobApplicationDTO>>> Update(int id, JobApplicationDTO dto)
+        public async Task<IActionResult> Update(int id, JobApplicationDTO dto)
         {
             if (dto == null)
             {
@@ -73,7 +73,7 @@ namespace API.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        public async Task<ActionResult<Response<object>>> Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
             var removed = await _service.DeleteAsync(id);
             if (!removed)

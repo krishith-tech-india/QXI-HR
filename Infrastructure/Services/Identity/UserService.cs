@@ -53,7 +53,10 @@ namespace Infrastructure.Services
 
         public async Task<QXIUserDTO?> AuthenticateUser(AuthRequestDto auth)
         {
-            var user = await _repo.Query(u => u.Email.Equals(auth.UsernameOrEmail) && u.Password.Equals(auth.Password), false).Include(u => u.UserRoles).ThenInclude(ur => ur.Role).FirstOrDefaultAsync();
+            var user = await _repo.Query(u => u.Email.Equals(auth.UsernameOrEmail) && u.Password.Equals(auth.Password), true)
+                                  .Include(u => u.UserRoles)
+                                  .ThenInclude(ur => ur.Role)
+                                  .FirstOrDefaultAsync();
             return user?.Adapt<QXIUserDTO>();
         }
     }

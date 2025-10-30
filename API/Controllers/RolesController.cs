@@ -14,14 +14,14 @@ namespace API.Controllers
         public RolesController(IRoleService service) => _service = service;
 
         [HttpGet]
-        public async Task<ActionResult<Response<IEnumerable<QXIRoleDTO>>>> GetAll()
+        public async Task<IActionResult> GetAll()
         {
             var list = await _service.GetAllAsync();
             return StatusCode(StatusCodes.Status200OK, Response<IEnumerable<QXIRoleDTO>>.Success(list, StatusCodes.Status200OK));
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<Response<QXIRoleDTO>>> GetById(int id)
+        public async Task<IActionResult> GetById(int id)
         {
             var dto = await _service.GetByIdAsync(id);
             if (dto == null)
@@ -32,7 +32,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Response<QXIRoleDTO>>> Create(QXIRoleDTO dto)
+        public async Task<IActionResult> Create(QXIRoleDTO dto)
         {
             if (dto == null)
             {
@@ -44,7 +44,7 @@ namespace API.Controllers
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult<Response<QXIRoleDTO>>> Update(int id, QXIRoleDTO dto)
+        public async Task<IActionResult> Update(int id, QXIRoleDTO dto)
         {
             if (dto == null)
             {
@@ -66,7 +66,7 @@ namespace API.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        public async Task<ActionResult<Response<object>>> Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
             var removed = await _service.DeleteAsync(id);
             if (!removed)
