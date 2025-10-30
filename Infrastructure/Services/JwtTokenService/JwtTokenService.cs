@@ -2,6 +2,7 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Core.DTOs.Common;
 using Core.Enums;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -17,7 +18,7 @@ public class JwtTokenService: IJwtTokenService
         _config = config;
     }
 
-    public string GenerateToken(string username, Roles role)
+    public AuthRespDto GenerateToken(string username, Roles role)
     {
         var jwtSettings = _config.GetSection("Jwt");
         var key = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSettings["Key"]));
@@ -38,6 +39,6 @@ public class JwtTokenService: IJwtTokenService
             signingCredentials: creds
         );
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        return new AuthRespDto { Token = new JwtSecurityTokenHandler().WriteToken(token), Role = role.ToString() };
     }
 }

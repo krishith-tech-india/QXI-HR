@@ -10,39 +10,35 @@ namespace API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IJwtTokenService _jwtService;
+        private readonly IUserService _userService;
 
-        public AuthController(IJwtTokenService jwtService)
+        public AuthController(IJwtTokenService jwtService, IUserService userService)
         {
             _jwtService = jwtService;
+            _userService = userService;
         }
 
         [HttpPost("login")]
-        public IActionResult Login([FromBody] AuthRequestDto request)
+        public async ActionResult<Response<AuthRespDto>> Login([FromBody] AuthRequestDto request)
         {
-            
+
 
             //Validate username/Email and password 
-            
-            //Get user by email or username 
+            var user = await _userService.AuthenticateUser(request);
 
-            
-            //Fetch user roles
+            if (user == null)
+                return Unauthorized(Response<AuthRespDto>.Failure(new Error("Unauthorized", "Username or password are incorrect."), StatusCodes.Status401Unauthorized));
 
-            //Genearte token
+
+            var userRole = user.UserRoles.FirstOrDefault();
+
+            if (userRole == null)
+                return Unauthorized(Response<AuthRespDto>.Failure(new Error("Unauthorized", "Roles are not assigned to user."), StatusCodes.Status401Unauthorized));
+
             // Dummy validation
-            if (request.UsernameOrEmail == "admin" && request.Password == "1234")
-            {
-                var token = _jwtService.GenerateToken(request.UsernameOrEmail, Roles.Admin);
-                return Ok(new { token });
-            }
+            var auth = _jwtService.GenerateToken(request.UsernameOrEmail, Roles.Admin);
 
-            if (request.UsernameOrEmail == "user" && request.Password == "1234")
-            {
-                var token = _jwtService.GenerateToken(request.UsernameOrEmail, Roles.Staff);
-                return Ok(new { token });
-            }
-
-            return Unauthorized();
+            return Ok(Response<AuthRespDto>.Success(auth, 200));
         }
     }
 }
