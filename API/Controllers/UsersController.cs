@@ -17,7 +17,7 @@ namespace API.Controllers
         public async Task<ActionResult<Response<IEnumerable<QXIUserDTO>>>> GetAll()
         {
             var list = await _service.GetAllAsync();
-            return Ok(Response<IEnumerable<QXIUserDTO>>.Success(list, 200));
+            return StatusCode(StatusCodes.Status200OK, Response<IEnumerable<QXIUserDTO>>.Success(list, StatusCodes.Status200OK));
         }
 
         [HttpGet("{id:int}")]
@@ -26,10 +26,9 @@ namespace API.Controllers
             var dto = await _service.GetByIdAsync(id);
             if (dto == null)
             {
-                var errors = new List<Error> { };
-                return NotFound(Response<QXIUserDTO>.Failure(new Error("NotFound", "User not found."), 404));
+                return StatusCode(StatusCodes.Status400BadRequest, Response<QXIUserDTO>.Failure(new Error("NotFound", "User not found."), StatusCodes.Status400BadRequest));
             }
-            return Ok(Response<QXIUserDTO>.Success(dto, 200));
+            return StatusCode(StatusCodes.Status200OK, Response<QXIUserDTO>.Success(dto, StatusCodes.Status200OK));
         }
 
         [HttpPost]
@@ -37,12 +36,11 @@ namespace API.Controllers
         {
             if (dto == null)
             {
-                var errors = new List<Error> { };
-                return BadRequest(Response<QXIUserDTO>.Failure(new Error("BadRequest", "Payload is null."), 400));
+                return StatusCode(StatusCodes.Status400BadRequest, Response<QXIUserDTO>.Failure(new Error("BadRequest", "Payload is null."), StatusCodes.Status400BadRequest));
             }
 
             var created = await _service.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, Response<QXIUserDTO>.Success(created, 201));
+            return StatusCode(StatusCodes.Status201Created, Response<QXIUserDTO>.Success(created, StatusCodes.Status201Created));
         }
 
         [HttpPut("{id:int}")]
@@ -50,24 +48,21 @@ namespace API.Controllers
         {
             if (dto == null)
             {
-                var errors = new List<Error> { };
-                return BadRequest(Response<QXIUserDTO>.Failure(new Error("BadRequest", "Payload is null."), 400));
+                return StatusCode(StatusCodes.Status400BadRequest, Response<QXIUserDTO>.Failure(new Error("BadRequest", "Payload is null."), StatusCodes.Status400BadRequest));
             }
 
             if (dto.Id != 0 && dto.Id != id)
             {
-                var errors = new List<Error> { };
-                return BadRequest(Response<QXIUserDTO>.Failure(new Error("BadRequest", "Id mismatch."), 400));
+                return StatusCode(StatusCodes.Status400BadRequest, Response<QXIUserDTO>.Failure(new Error("BadRequest", "Id mismatch."), StatusCodes.Status400BadRequest));
             }
 
             var updated = await _service.UpdateAsync(id, dto);
             if (updated == null)
             {
-                var errors = new List<Error> { };
-                return NotFound(Response<QXIUserDTO>.Failure(new Error("NotFound", "User not found."), 404));
+                return StatusCode(StatusCodes.Status400BadRequest, Response<QXIUserDTO>.Failure(new Error("NotFound", "User not found."), StatusCodes.Status400BadRequest));
             }
 
-            return Ok(Response<QXIUserDTO>.Success(updated, 200));
+            return StatusCode(StatusCodes.Status200OK, Response<QXIUserDTO>.Success(updated, StatusCodes.Status200OK));
         }
 
         [HttpDelete("{id:int}")]
@@ -76,11 +71,10 @@ namespace API.Controllers
             var removed = await _service.DeleteAsync(id);
             if (!removed)
             {
-                var errors = new List<Error> { };
-                return NotFound(Response<object>.Failure(new Error("NotFound", "User not found."), 404));
+                return StatusCode(StatusCodes.Status400BadRequest, Response<object>.Failure(new Error("NotFound", "User not found."), StatusCodes.Status400BadRequest));
             }
 
-            return StatusCode(204, Response<object>.Success(null, 204));
+            return StatusCode(StatusCodes.Status200OK, Response<object>.Success(null, StatusCodes.Status200OK));
         }
     }
 }

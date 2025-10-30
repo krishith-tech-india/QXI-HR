@@ -52,6 +52,25 @@ namespace Data.Reopsitories
         }
 
         /// <inheritdoc />
+        public (int total, IQueryable<TEntity>) PagedQuery(Expression<Func<TEntity, bool>>? filter, int pageNumber, int pageSize, bool asNoTracking = true)
+        {
+            var query = GetQueryable(filter, asNoTracking);
+            var pagedQuery = query.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+            int total = query.Count();
+            return (total, pagedQuery);
+        }
+
+        /// <inheritdoc />
+        public async Task<(int total, IQueryable<TEntity>)> PagedQueryAsync(Expression<Func<TEntity, bool>>? filter, int pageNumber, int pageSize, bool asNoTracking = true)
+        {
+            var query = GetQueryable(filter, asNoTracking);
+            var pagedQuery = query.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+            
+            int total = await query.CountAsync();
+            return (total, pagedQuery);
+        }
+
+        /// <inheritdoc />
         public void Update(TEntity entity)
         {
             if (entity != null)

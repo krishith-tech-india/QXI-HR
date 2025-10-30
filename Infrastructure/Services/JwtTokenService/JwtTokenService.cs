@@ -34,7 +34,7 @@ public class JwtTokenService: IJwtTokenService
             issuer: jwtSettings["Issuer"],
             audience: jwtSettings["Audience"],
             claims: claims,
-            expires: DateTime.Now.AddMinutes(double.Parse(jwtSettings["ExpireMinutes"] ?? "0")),
+            expires: DateTime.UtcNow.AddMinutes(double.Parse(jwtSettings["ExpireMinutes"] ?? "0")),
             signingCredentials: creds
         );
 
