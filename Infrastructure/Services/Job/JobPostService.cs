@@ -30,7 +30,7 @@ namespace Infrastructure.Services
 
         public async Task<IEnumerable<JobPostDTO>> GetAllAsync()
         {
-            var list = await _repo.GetAll(false).Include(j => j.Applications).ToListAsync();
+            var list = await _repo.GetAll(false).ToListAsync();
             return list.Adapt<IEnumerable<JobPostDTO>>();
         }
 
@@ -75,7 +75,7 @@ namespace Infrastructure.Services
 
         public async Task<IEnumerable<JobApplicationDTO>> GetAllAsync()
         {
-            var list = await _repo.GetAll(false).Include(a => a.JobPost).ToListAsync();
+            var list = await _repo.GetAll(false).ToListAsync();
             return list.Adapt<IEnumerable<JobApplicationDTO>>();
         }
 

@@ -30,7 +30,7 @@ namespace Infrastructure.Services
 
         public async Task<IEnumerable<QXIUserDTO>> GetAllAsync()
         {
-            var list = await _repo.GetAll(false).Include(u => u.UserRoles).ToListAsync();
+            var list = await _repo.GetAll(false).ToListAsync();
             return list.Adapt<IEnumerable<QXIUserDTO>>();
         }
 

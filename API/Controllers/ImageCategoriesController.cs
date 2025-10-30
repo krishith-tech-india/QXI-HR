@@ -1,6 +1,8 @@
 using Core.DTOs;
 using Core.DTOs.Common;
+using Core.Enums;
 using Infrastructure.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
@@ -31,6 +33,7 @@ namespace API.Controllers
             return Ok(Response<ImageCategoryDTO>.Success(dto, 200));
         }
 
+        [Authorize(Roles = $"{nameof(Roles.Admin)}")]
         [HttpPost]
         public async Task<ActionResult<Response<ImageCategoryDTO>>> Create(ImageCategoryDTO dto)
         {

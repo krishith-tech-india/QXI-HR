@@ -30,7 +30,7 @@ namespace Infrastructure.Services
 
         public async Task<IEnumerable<ImageCategoryDTO>> GetAllAsync()
         {
-            var list = await _repo.GetAll(false).Include(c => c.Images).ToListAsync();
+            var list = await _repo.GetAll(false).ToListAsync();
             return list.Adapt<IEnumerable<ImageCategoryDTO>>();
         }
 

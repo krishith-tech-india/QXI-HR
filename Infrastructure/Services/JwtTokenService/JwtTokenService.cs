@@ -1,0 +1,43 @@
+using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Core.Enums;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+
+namespace Infrastructure.Services;
+
+public class JwtTokenService: IJwtTokenService
+{
+    private readonly IConfiguration _config;
+
+    public JwtTokenService(IConfiguration config)
+    {
+        _config = config;
+    }
+
+    public string GenerateToken(string username, Roles role)
+    {
+        var jwtSettings = _config.GetSection("Jwt");
+        var key = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSettings["Key"]));
+
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Name, username),
+            new Claim(ClaimTypes.Role, role.ToString())
+        };
+
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: jwtSettings["Issuer"],
+            audience: jwtSettings["Audience"],
+            claims: claims,
+            expires: DateTime.Now.AddMinutes(double.Parse(jwtSettings["ExpireMinutes"] ?? "0")),
+            signingCredentials: creds
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+}

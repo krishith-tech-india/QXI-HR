@@ -11,7 +11,7 @@ namespace API
         {
             AppSettings? appSettings = configuration.GetSection("AppSettings").Get<AppSettings>();
 
-            services.AddJWT(configuration);
+            //services.AddJWT(configuration);
 
             object value1 = services.AddHttpContextAccessor();
 

@@ -30,13 +30,13 @@ namespace Infrastructure.Services
 
         public async Task<IEnumerable<QXIRoleDTO>> GetAllAsync()
         {
-            var list = await _repo.GetAll(false).Include(r => r.UserRoles).ToListAsync();
+            var list = await _repo.GetAll(false).ToListAsync();
             return list.Adapt<IEnumerable<QXIRoleDTO>>();
         }
 
         public async Task<QXIRoleDTO?> GetByIdAsync(int id)
         {
-            var e = await _repo.Query(r => r.Id == id, false).Include(r => r.UserRoles).FirstOrDefaultAsync();
+            var e = await _repo.Query(r => r.Id == id, false).FirstOrDefaultAsync();
             return e?.Adapt<QXIRoleDTO>();
         }
 

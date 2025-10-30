@@ -16,6 +16,7 @@ namespace Infrastructure
             services.AddScoped<IGallaryImageService, GallaryImageService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRoleService, RoleService>();
+            services.AddScoped<IJwtTokenService, JwtTokenService>();
             return services;
         }
     }
