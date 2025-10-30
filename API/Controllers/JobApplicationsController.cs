@@ -13,11 +13,11 @@ namespace API.Controllers
 
         public JobApplicationsController(IJobApplicationService service) => _service = service;
 
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
+        [HttpPost]
+        public async Task<IActionResult> GetAll(RequestParams dto)
         {
-            var list = await _service.GetAllAsync();
-            return StatusCode(StatusCodes.Status200OK, Response<IEnumerable<JobApplicationDTO>>.Success(list, StatusCodes.Status200OK));
+            var response = await _service.GetAllAsync(dto);
+            return StatusCode(StatusCodes.Status200OK, response);
         }
 
         [HttpGet("{id:int}")]

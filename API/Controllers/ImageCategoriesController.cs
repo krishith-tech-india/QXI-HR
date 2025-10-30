@@ -16,10 +16,10 @@ namespace API.Controllers
         public ImageCategoriesController(IImageCategoryService service) => _service = service;
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll(RequestParams requestParams)
         {
-            var list = await _service.GetAllAsync();
-            return StatusCode(StatusCodes.Status200OK, Response<IEnumerable<ImageCategoryDTO>>.Success(list, StatusCodes.Status200OK));
+            var responce = await _service.GetAllAsync(requestParams);
+            return StatusCode(StatusCodes.Status200OK, responce);
         }
 
         [HttpGet("{id:int}")]

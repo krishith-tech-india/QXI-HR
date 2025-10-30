@@ -1,8 +1,12 @@
 using Core.DTOs;
+using Core.DTOs.Common;
+using Core.Helpers;
 using Data.Models;
 using Data.Reopsitories;
 using Mapster;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace Infrastructure.Services
 {
@@ -28,10 +32,30 @@ namespace Infrastructure.Services
             return true;
         }
 
-        public async Task<IEnumerable<JobApplicationDTO>> GetAllAsync()
+        public async Task<PagedResponse<JobApplicationDTO>> GetAllAsync(RequestParams requestParams)
         {
-            var list = await _repo.GetAll(true).ToListAsync();
-            return list.Adapt<IEnumerable<JobApplicationDTO>>();
+            Expression<Func<JobApplication, object>> sort = x => x.Id; // Default sort
+            Expression<Func<JobApplication, bool>> filter = PredicateBuilder.BuildFilterExpression<JobApplication>(requestParams.Filters);
+            if(!string.IsNullOrWhiteSpace(requestParams.SearchKeyword))
+            {
+                requestParams.SearchKeyword = requestParams.SearchKeyword.Trim().ToLikeFilterString(Operator.Contains);
+                Expression<Func<JobApplication, bool>> searchExpr = ja => EF.Functions.Like(ja.ApplicantName, requestParams.SearchKeyword) 
+                || EF.Functions.Like(ja.ApplicantEmail, requestParams.SearchKeyword);
+
+                filter = filter == null ? searchExpr : PredicateBuilder.And(filter, searchExpr);
+            }
+
+
+            if (!string.IsNullOrWhiteSpace(requestParams.SortBy))
+            {
+                sort = PredicateBuilder.BuildSortExpression<JobApplication>(requestParams.SortBy);
+            }
+
+            (var total, var query) = await _repo.PagedQueryAsync(filter, sort, requestParams.Page, requestParams.PageSize);
+                
+            var list = await query.Adapt<IQueryable<JobApplicationDTO>>().ToListAsync();
+
+            return PagedResponse<JobApplicationDTO>.Success(list, total, requestParams, StatusCodes.Status200OK);
         }
 
         public async Task<JobApplicationDTO?> GetByIdAsync(int id)

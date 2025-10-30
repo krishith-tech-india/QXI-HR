@@ -59,6 +59,11 @@ namespace Infrastructure.Services
                                   .FirstOrDefaultAsync();
             return user?.Adapt<QXIUserDTO>();
         }
+
+        public Task<PagedResponse<QXIUserDTO>> GetAllAsync(RequestParams requestParams)
+        {
+            throw new NotImplementedException();
+        }
     }
 
 }

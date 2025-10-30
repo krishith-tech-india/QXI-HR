@@ -13,11 +13,11 @@ namespace API.Controllers
 
         public GallaryImagesController(IGallaryImageService service) => _service = service;
 
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
+        [HttpPost]
+        public async Task<IActionResult> GetAll(RequestParams requestParams)
         {
-            var list = await _service.GetAllAsync();
-            return StatusCode(StatusCodes.Status200OK, Response<IEnumerable<GallaryImageDTO>>.Success(list, StatusCodes.Status200OK));
+            var response = await _service.GetAllAsync(requestParams);
+            return StatusCode(response.StatusCode, response);
         }
 
         [HttpGet("{id:int}")]

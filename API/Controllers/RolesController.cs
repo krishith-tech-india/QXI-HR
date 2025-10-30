@@ -14,10 +14,10 @@ namespace API.Controllers
         public RolesController(IRoleService service) => _service = service;
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll(RequestParams requestParams)
         {
-            var list = await _service.GetAllAsync();
-            return StatusCode(StatusCodes.Status200OK, Response<IEnumerable<QXIRoleDTO>>.Success(list, StatusCodes.Status200OK));
+            var response = await _service.GetAllAsync(requestParams);
+            return StatusCode(StatusCodes.Status200OK, response);
         }
 
         [HttpGet("{id:int}")]

@@ -1,8 +1,12 @@
 using Core.DTOs;
+using Core.DTOs.Common;
+using Core.Helpers;
 using Data.Models;
 using Data.Reopsitories;
 using Mapster;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace Infrastructure.Services
 {
@@ -28,10 +32,35 @@ namespace Infrastructure.Services
             return true;
         }
 
-        public async Task<IEnumerable<JobPostDTO>> GetAllAsync()
+        public async Task<PagedResponse<JobPostDTO>> GetAllAsync(RequestParams requestParams)
         {
-            var list = await _repo.GetAll(false).ToListAsync();
-            return list.Adapt<IEnumerable<JobPostDTO>>();
+
+            Expression<Func<JobPost, object>> sort = x => x.Id; // Default sort
+            Expression<Func<JobPost, bool>> filter = PredicateBuilder.BuildFilterExpression<JobPost>(requestParams.Filters);
+            if (!string.IsNullOrWhiteSpace(requestParams.SearchKeyword))
+            {
+                requestParams.SearchKeyword = requestParams.SearchKeyword.Trim().ToLikeFilterString(Operator.Contains);
+                Expression<Func<JobPost, bool>> searchExpr = ja => EF.Functions.Like(ja.CompanyName, requestParams.SearchKeyword)
+                                                                   || EF.Functions.Like(ja.Skils, requestParams.SearchKeyword)
+                                                                   || EF.Functions.Like(ja.Description, requestParams.SearchKeyword)
+                                                                   || EF.Functions.Like(ja.Title, requestParams.SearchKeyword)
+                                                                   || EF.Functions.Like(ja.Location, requestParams.SearchKeyword);
+
+                filter = filter == null ? searchExpr : PredicateBuilder.And(filter, searchExpr);
+            }
+
+
+            if (!string.IsNullOrWhiteSpace(requestParams.SortBy))
+            {
+                sort = PredicateBuilder.BuildSortExpression<JobPost>(requestParams.SortBy);
+            }
+
+            (var total, var query) = await _repo.PagedQueryAsync(filter, sort, requestParams.Page, requestParams.PageSize);
+
+            var list = await query.Adapt<IQueryable<JobPostDTO>>().ToListAsync();
+
+            return PagedResponse<JobPostDTO>.Success(list, total, requestParams, StatusCodes.Status200OK);
+
         }
 
         public async Task<JobPostDTO?> GetByIdAsync(int id)

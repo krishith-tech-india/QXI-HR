@@ -1,4 +1,5 @@
 using Core.DTOs;
+using Core.DTOs.Common;
 using Data.Models;
 using Data.Reopsitories;
 using Mapster;
@@ -57,6 +58,11 @@ namespace Infrastructure.Services
         {
             var list = await _repo.Query(i => i.CategoryId == categoryId, true).ToListAsync();
             return list.Adapt<IEnumerable<GallaryImageDTO>>();
+        }
+
+        public Task<PagedResponse<GallaryImageDTO>> GetAllAsync(RequestParams requestParams)
+        {
+            throw new NotImplementedException();
         }
     }
 }

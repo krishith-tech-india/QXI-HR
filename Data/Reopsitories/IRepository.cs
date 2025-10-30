@@ -106,20 +106,33 @@ namespace Data.Reopsitories
         /// Gets the paged queryable based on given filter page number and pagesize.
         /// </summary>
         /// <param name="filter">The filter.</param>
+        /// <param name="sort">The sort expression.</param>
         /// <param name="pageNumber">The page number.</param>
         /// <param name="pageSize">The no. of records per page.</param>
+        /// <param name="isDescending">If true, is descending.</param>
         /// <param name="asNoTracking">If true, as no tracking.</param>
         /// <returns>Returns a <see cref="ValueTuple{int , IQueryable{TEntity}}"/> contains total records and Queryable with the page number and page size.</returns>
-        (int total, IQueryable<TEntity>) PagedQuery(Expression<Func<TEntity, bool>>? filter, int pageNumber, int pageSize, bool asNoTracking = true);
-
+        (int total, IQueryable<TEntity>) PagedQuery(Expression<Func<TEntity, bool>>? filter,
+                                                    Expression<Func<TEntity, object>>? sort,
+                                                    int pageNumber,
+                                                    int pageSize,
+                                                    bool isDescending = false,
+                                                    bool asNoTracking = true);
         /// <summary>
         /// Gets the paged queryable based on given filter page number and pagesize asynchronosly.
         /// </summary>
         /// <param name="filter">The filter.</param>
+        /// <param name="sort">The sort expression.</param>
         /// <param name="pageNumber">The page number.</param>
         /// <param name="pageSize">The no. of records per page.</param>
+        /// <param name="isDescending">If true, is descending.</param>
         /// <param name="asNoTracking">If true, as no tracking.</param>
         /// <returns>Returns a <see cref="Task"/> with value value <see cref="ValueTuple{int , IQueryable{TEntity}}"/> contains total records and Queryable with the page number and page size.</returns>
-        Task<(int total, IQueryable<TEntity>)> PagedQueryAsync(Expression<Func<TEntity, bool>>? filter, int pageNumber, int pageSize, bool asNoTracking = true);
+        Task<(int total, IQueryable<TEntity>)> PagedQueryAsync(Expression<Func<TEntity, bool>>? filter,
+                                                               Expression<Func<TEntity, object>>? sort,
+                                                               int pageNumber,
+                                                               int pageSize,
+                                                               bool isDescending = false,
+                                                               bool asNoTracking = true);
     }
 }
