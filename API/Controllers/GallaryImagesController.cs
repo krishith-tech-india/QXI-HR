@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[Action]")]
     public class GallaryImagesController : ControllerBase
     {
         private readonly IGallaryImageService _service;

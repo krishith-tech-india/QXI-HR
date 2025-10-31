@@ -8,14 +8,14 @@ using Microsoft.AspNetCore.Mvc;
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[Action]")]
     public class ImageCategoriesController : ControllerBase
     {
         private readonly IImageCategoryService _service;
 
         public ImageCategoriesController(IImageCategoryService service) => _service = service;
 
-        [HttpGet]
+        [HttpPost]
         public async Task<IActionResult> GetAll(RequestParams requestParams)
         {
             var responce = await _service.GetAllAsync(requestParams);

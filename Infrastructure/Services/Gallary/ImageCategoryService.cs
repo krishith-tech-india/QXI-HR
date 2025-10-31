@@ -44,7 +44,6 @@ namespace Infrastructure.Services
                 filter = filter == null ? searchExpr : PredicateBuilder.And(filter, searchExpr);
             }
 
-
             if (!string.IsNullOrWhiteSpace(requestParams.SortBy))
             {
                 sort = PredicateBuilder.BuildSortExpression<ImageCategory>(requestParams.SortBy);
@@ -52,9 +51,9 @@ namespace Infrastructure.Services
 
             (var total, var query) = await _repo.PagedQueryAsync(filter, sort, requestParams.Page, requestParams.PageSize);
 
-            var list = await query.Adapt<IQueryable<ImageCategoryDTO>>().ToListAsync();
+            var list = await query.ToListAsync();
 
-            return PagedResponse<ImageCategoryDTO>.Success(list, total, requestParams, StatusCodes.Status200OK);
+            return PagedResponse<ImageCategoryDTO>.Success(list.Adapt<List<ImageCategoryDTO>>(), total, requestParams, StatusCodes.Status200OK);
 
         }
 

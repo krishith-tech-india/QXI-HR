@@ -6,14 +6,14 @@ using Microsoft.AspNetCore.Mvc;
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[Action]")]
     public class RolesController : ControllerBase
     {
         private readonly IRoleService _service;
 
         public RolesController(IRoleService service) => _service = service;
 
-        [HttpGet]
+        [HttpPost]
         public async Task<IActionResult> GetAll(RequestParams requestParams)
         {
             var response = await _service.GetAllAsync(requestParams);

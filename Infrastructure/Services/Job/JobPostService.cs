@@ -56,9 +56,9 @@ namespace Infrastructure.Services
 
             (var total, var query) = await _repo.PagedQueryAsync(filter, sort, requestParams.Page, requestParams.PageSize);
 
-            var list = await query.Adapt<IQueryable<JobPostDTO>>().ToListAsync();
+            var list = await query.ToListAsync();
 
-            return PagedResponse<JobPostDTO>.Success(list, total, requestParams, StatusCodes.Status200OK);
+            return PagedResponse<JobPostDTO>.Success(list.Adapt<IQueryable<JobPostDTO>>(), total, requestParams, StatusCodes.Status200OK);
 
         }
 

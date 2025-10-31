@@ -8,14 +8,14 @@ using Microsoft.AspNetCore.Mvc;
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[Action]")]
     public class JobPostsController : ControllerBase
     {
         private readonly IJobPostService _service;
 
         public JobPostsController(IJobPostService service) => _service = service;
 
-        [HttpGet]
+        [HttpPost]
         public async Task<IActionResult> GetAll(RequestParams requestParams)
         {
             var response = await _service.GetAllAsync(requestParams);

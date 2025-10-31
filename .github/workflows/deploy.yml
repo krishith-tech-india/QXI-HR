@@ -1,0 +1,37 @@
+name: Deploy QXI-HR API to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Publish .NET API
+        run: |
+          cd API
+          dotnet publish -c Release -o publish
+
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: deploy
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd /var/webapps/QXI-HR/repo
+            git pull origin main
+            cd API
+            dotnet publish -c Release -o /var/webapps/QXI-HR/API/publish
+            sudo systemctl restart qxihr-api

@@ -78,9 +78,9 @@ namespace Infrastructure.Services
 
             (var total, var query) = await _repo.PagedQueryAsync(filter, sort, requestParams.Page, requestParams.PageSize);
 
-            var list = await query.Adapt<IQueryable<GallaryImageDTO>>().ToListAsync();
+            var list = await query.ToListAsync();
 
-            return PagedResponse<GallaryImageDTO>.Success(list, total, requestParams, StatusCodes.Status200OK);
+            return PagedResponse<GallaryImageDTO>.Success(list.Adapt<List<GallaryImageDTO>>(), total, requestParams, StatusCodes.Status200OK);
 
         }
     }
