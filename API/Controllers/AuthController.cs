@@ -1,5 +1,4 @@
 ﻿using Core.DTOs.Common;
-using Core.Enums;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,26 +18,24 @@ namespace API.Controllers
         }
 
         [HttpPost("login")]
-        public async ActionResult<Response<AuthRespDto>> Login([FromBody] AuthRequestDto request)
+        public async Task<IActionResult> Login([FromBody] AuthRequestDto request)
         {
-
-
             //Validate username/Email and password 
             var user = await _userService.AuthenticateUser(request);
 
             if (user == null)
-                return Unauthorized(Response<AuthRespDto>.Failure(new Error("Unauthorized", "Username or password are incorrect."), StatusCodes.Status401Unauthorized));
+                return StatusCode(StatusCodes.Status401Unauthorized, Response<AuthRespDto>.Failure(new Error("StatusCode", "Username or password are incorrect."), StatusCodes.Status401Unauthorized));
 
 
-            var userRole = user.UserRoles.FirstOrDefault();
+            //var userRole = user.Roles?.FirstOrDefault();
 
-            if (userRole == null)
-                return Unauthorized(Response<AuthRespDto>.Failure(new Error("Unauthorized", "Roles are not assigned to user."), StatusCodes.Status401Unauthorized));
+            if (user.Roles == null || user.Roles.Count <= 0)
+                return StatusCode(StatusCodes.Status401Unauthorized, Response<AuthRespDto>.Failure(new Error("StatusCode", "Roles are not assigned to user."), StatusCodes.Status401Unauthorized));
 
             // Dummy validation
-            var auth = _jwtService.GenerateToken(request.UsernameOrEmail, Roles.Admin);
+            var auth = _jwtService.GenerateToken(request.UsernameOrEmail, [..user.Roles.Select(x=> x.Role)]);
 
-            return Ok(Response<AuthRespDto>.Success(auth, 200));
+            return StatusCode(StatusCodes.Status200OK, Response<AuthRespDto>.Success(auth, 200));
         }
     }
 }

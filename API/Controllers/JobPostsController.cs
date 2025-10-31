@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Core.DTOs;
 using Core.DTOs.Common;
 using Infrastructure.Services;
@@ -14,73 +16,67 @@ namespace API.Controllers
         public JobPostsController(IJobPostService service) => _service = service;
 
         [HttpGet]
-        public async Task<ActionResult<Response<IEnumerable<JobPostDTO>>>> GetAll()
+        public async Task<IActionResult> GetAll(RequestParams requestParams)
         {
-            var list = await _service.GetAllAsync();
-            return Ok(Response<IEnumerable<JobPostDTO>>.Success(list, 200));
+            var response = await _service.GetAllAsync(requestParams);
+            return StatusCode(StatusCodes.Status200OK, response);
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<Response<JobPostDTO>>> GetById(int id)
+        public async Task<IActionResult> GetById(int id)
         {
             var dto = await _service.GetByIdAsync(id);
             if (dto == null)
             {
-                var errors = new List<Error> { };
-                return NotFound(Response<JobPostDTO>.Failure(new Error("NotFound", "JobPost not found."), 404));
+                return StatusCode(StatusCodes.Status400BadRequest, Response<JobPostDTO>.Failure(new Error("NotFound", "JobPost not found."), StatusCodes.Status400BadRequest));
             }
-            return Ok(Response<JobPostDTO>.Success(dto, 200));
+            return StatusCode(StatusCodes.Status200OK, Response<JobPostDTO>.Success(dto, StatusCodes.Status200OK));
         }
 
         [HttpPost]
-        public async Task<ActionResult<Response<JobPostDTO>>> Create(JobPostDTO dto)
+        public async Task<IActionResult> Create(JobPostDTO dto)
         {
             if (dto == null)
             {
-                var errors = new List<Error> { };
-                return BadRequest(Response<JobPostDTO>.Failure(new Error("BadRequest", "Payload is null."), 400));
+                return StatusCode(StatusCodes.Status400BadRequest, Response<JobPostDTO>.Failure(new Error("BadRequest", "Payload is null."), StatusCodes.Status400BadRequest));
             }
 
             var created = await _service.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, Response<JobPostDTO>.Success(created, 201));
+            return StatusCode(StatusCodes.Status201Created, Response<JobPostDTO>.Success(created, StatusCodes.Status201Created));
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult<Response<JobPostDTO>>> Update(int id, JobPostDTO dto)
+        public async Task<IActionResult> Update(int id, JobPostDTO dto)
         {
             if (dto == null)
             {
-                var errors = new List<Error> { };
-                return BadRequest(Response<JobPostDTO>.Failure(new Error("BadRequest", "Payload is null."), 400));
+                return StatusCode(StatusCodes.Status400BadRequest, Response<JobPostDTO>.Failure(new Error("BadRequest", "Payload is null."), StatusCodes.Status400BadRequest));
             }
 
             if (dto.Id != 0 && dto.Id != id)
             {
-                var errors = new List<Error> { };
-                return BadRequest(Response<JobPostDTO>.Failure(new Error("BadRequest", "Id mismatch."), 400));
+                return StatusCode(StatusCodes.Status400BadRequest, Response<JobPostDTO>.Failure(new Error("BadRequest", "Id mismatch."), StatusCodes.Status400BadRequest));
             }
 
             var updated = await _service.UpdateAsync(id, dto);
             if (updated == null)
             {
-                var errors = new List<Error> { };
-                return NotFound(Response<JobPostDTO>.Failure(new Error("NotFound", "JobPost not found."), 404));
+                return StatusCode(StatusCodes.Status400BadRequest, Response<JobPostDTO>.Failure(new Error("NotFound", "JobPost not found."), StatusCodes.Status400BadRequest));
             }
 
-            return Ok(Response<JobPostDTO>.Success(updated, 200));
+            return StatusCode(StatusCodes.Status200OK, Response<JobPostDTO>.Success(updated, StatusCodes.Status200OK));
         }
 
         [HttpDelete("{id:int}")]
-        public async Task<ActionResult<Response<object>>> Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
             var removed = await _service.DeleteAsync(id);
             if (!removed)
             {
-                var errors = new List<Error> { };
-                return NotFound(Response<object>.Failure(new Error("NotFound", "JobPost not found."), 404));
+                return StatusCode(StatusCodes.Status400BadRequest, Response<object>.Failure(new Error("NotFound", "JobPost not found."), StatusCodes.Status400BadRequest));
             }
 
-            return StatusCode(204, Response<object>.Success(null, 204));
+            return StatusCode(StatusCodes.Status200OK, Response<object>.Success(null, StatusCodes.Status200OK));
         }
     }
 }

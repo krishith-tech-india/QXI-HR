@@ -14,9 +14,9 @@ namespace Infrastructure
             TypeAdapterConfig<JobApplication, JobApplicationDTO>.NewConfig().PreserveReference(true);
 
             // Identity
-            TypeAdapterConfig<QXIUser, QXIUserDTO>.NewConfig().PreserveReference(true);
+            TypeAdapterConfig<QXIUser, QXIUserDTO>.NewConfig().PreserveReference(true)
+                .Map(dest => dest.Roles, source => source.UserRoles.Select(x => x.Role));
             TypeAdapterConfig<QXIRole, QXIRoleDTO>.NewConfig().PreserveReference(true);
-            TypeAdapterConfig<QXIUserRole, QXIUserRoleDTO>.NewConfig();
 
             // Media
             TypeAdapterConfig<ImageCategory, ImageCategoryDTO>.NewConfig().PreserveReference(true);

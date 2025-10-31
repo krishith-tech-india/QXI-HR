@@ -52,6 +52,57 @@ namespace Data.Reopsitories
         }
 
         /// <inheritdoc />
+        public (int total, IQueryable<TEntity>) PagedQuery(Expression<Func<TEntity, bool>>? filter,
+                                                           Expression<Func<TEntity, object>>? sort,
+                                                           int pageNumber,
+                                                           int pageSize,
+                                                           bool isDescending = false,
+                                                           bool asNoTracking = true)
+        {
+            var query = GetQueryable(filter, asNoTracking);
+            if (sort is not null)
+            {
+                if (isDescending)
+                {
+                    query = query.OrderByDescending(sort!);
+                }
+                else
+                {
+                    query = query.OrderBy(sort!);
+                } 
+            }
+            var pagedQuery = query.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+            int total = query.Count();
+            return (total, pagedQuery);
+        }
+
+        /// <inheritdoc />
+        public async Task<(int total, IQueryable<TEntity>)> PagedQueryAsync(Expression<Func<TEntity, bool>>? filter,
+                                                                            Expression<Func<TEntity, object>>? sort,
+                                                                            int pageNumber,
+                                                                            int pageSize,
+                                                                            bool isDescending = false,
+                                                                            bool asNoTracking = true)
+        {
+            var query = GetQueryable(filter, asNoTracking);
+            if (sort is not null)
+            {
+                if (isDescending)
+                {
+                    query = query.OrderByDescending(sort!);
+                }
+                else
+                {
+                    query = query.OrderBy(sort!);
+                } 
+            }
+            var pagedQuery = query.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+            
+            int total = await query.CountAsync();
+            return (total, pagedQuery);
+        }
+
+        /// <inheritdoc />
         public void Update(TEntity entity)
         {
             if (entity != null)

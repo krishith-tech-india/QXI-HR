@@ -2,9 +2,9 @@
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
-namespace Core
+namespace Core.Helpers
 {
-    public static class PradicateBuilder
+    public static class PredicateBuilder 
     {
         public static Expression<Func<T, bool>> True<T>() { return param => true; }
 

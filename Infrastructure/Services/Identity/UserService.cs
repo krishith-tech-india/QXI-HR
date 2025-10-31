@@ -1,8 +1,11 @@
+using System.Linq.Expressions;
 using Core.DTOs;
 using Core.DTOs.Common;
+using Core.Helpers;
 using Data.Models;
 using Data.Reopsitories;
 using Mapster;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Services
@@ -53,8 +56,43 @@ namespace Infrastructure.Services
 
         public async Task<QXIUserDTO?> AuthenticateUser(AuthRequestDto auth)
         {
-            var user = await _repo.Query(u => u.Email.Equals(auth.UsernameOrEmail) && u.Password.Equals(auth.Password), false).Include(u => u.UserRoles).ThenInclude(ur => ur.Role).FirstOrDefaultAsync();
+            var user = await _repo.Query(u => u.Email.Equals(auth.UsernameOrEmail) && u.Password.Equals(auth.Password), true)
+                                  .Include(u => u.UserRoles)
+                                  .ThenInclude(ur => ur.Role)
+                                  .FirstOrDefaultAsync();
             return user?.Adapt<QXIUserDTO>();
+        }
+
+        public async Task<PagedResponse<QXIUserDTO>> GetAllAsync(RequestParams requestParams)
+        {
+            Expression<Func<QXIUser, object>> sort = x => x.Id; // Default sort
+            Expression<Func<QXIUser, bool>> filter = PredicateBuilder.BuildFilterExpression<QXIUser>(requestParams.Filters);
+            if (!string.IsNullOrWhiteSpace(requestParams.SearchKeyword))
+            {
+                requestParams.SearchKeyword = requestParams.SearchKeyword.Trim().ToLikeFilterString(Operator.Contains);
+                Expression<Func<QXIUser, bool>> searchExpr = ja => EF.Functions.Like(ja.FirstName, requestParams.SearchKeyword)
+                                                                   || EF.Functions.Like(ja.LastName, requestParams.SearchKeyword)
+                                                                   || EF.Functions.Like(ja.Email, requestParams.SearchKeyword)
+                                                                   || EF.Functions.Like(ja.Position, requestParams.SearchKeyword)
+                                                                   || EF.Functions.Like(ja.PhoneNumber, requestParams.SearchKeyword)
+                                                                   || EF.Functions.Like(ja.LinkedInProfileUrl, requestParams.SearchKeyword)
+                                                                   || EF.Functions.Like(ja.Bio, requestParams.SearchKeyword);
+
+                filter = filter == null ? searchExpr : PredicateBuilder.And(filter, searchExpr);
+            }
+
+
+            if (!string.IsNullOrWhiteSpace(requestParams.SortBy))
+            {
+                sort = PredicateBuilder.BuildSortExpression<QXIUser>(requestParams.SortBy);
+            }
+
+            (var total, var query) = await _repo.PagedQueryAsync(filter, sort, requestParams.Page, requestParams.PageSize);
+
+            var list = await query.Adapt<IQueryable<QXIUserDTO>>().ToListAsync();
+
+            return PagedResponse<QXIUserDTO>.Success(list, total, requestParams, StatusCodes.Status200OK);
+
         }
     }
 

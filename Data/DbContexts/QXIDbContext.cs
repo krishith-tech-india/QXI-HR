@@ -1,6 +1,9 @@
-﻿using Data.Models;
+﻿using System.Linq.Expressions;
+using System.Reflection.Metadata;
+using Data.Models;
 using Data.Models.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace Data.DbContexts
 {
@@ -37,6 +40,23 @@ namespace Data.DbContexts
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Model.GetEntityTypes()
+                .Where(t => typeof(EntityBase).IsAssignableFrom(t.ClrType))
+                .ToList()
+                .ForEach(entityType =>
+                {
+                    var parameter = Expression.Parameter(entityType.ClrType, "x");
+                    var filter = Expression.Lambda(
+                        Expression.Equal(
+                            Expression.Property(parameter, nameof(EntityBase.IsActive)),
+                            Expression.Constant(true)
+                        ),
+                        parameter
+                    );
+                    modelBuilder.Entity(entityType.ClrType).HasQueryFilter(filter);
+                });
+
+
             modelBuilder.Entity<QXIUser>(entity =>
             {
                 entity.HasKey(e => e.Id);

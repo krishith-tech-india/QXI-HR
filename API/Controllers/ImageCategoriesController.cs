@@ -16,68 +16,68 @@ namespace API.Controllers
         public ImageCategoriesController(IImageCategoryService service) => _service = service;
 
         [HttpGet]
-        public async Task<ActionResult<Response<IEnumerable<ImageCategoryDTO>>>> GetAll()
+        public async Task<IActionResult> GetAll(RequestParams requestParams)
         {
-            var list = await _service.GetAllAsync();
-            return Ok(Response<IEnumerable<ImageCategoryDTO>>.Success(list, 200));
+            var responce = await _service.GetAllAsync(requestParams);
+            return StatusCode(StatusCodes.Status200OK, responce);
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<Response<ImageCategoryDTO>>> GetById(int id)
+        public async Task<IActionResult> GetById(int id)
         {
             var dto = await _service.GetByIdAsync(id);
             if (dto == null)
             {
-                return NotFound(Response<ImageCategoryDTO>.Failure(new Error("NotFound", "ImageCategory not found."), 404));
+                return StatusCode(StatusCodes.Status400BadRequest, Response<ImageCategoryDTO>.Failure(new Error("NotFound", "ImageCategory not found."), StatusCodes.Status400BadRequest));
             }
-            return Ok(Response<ImageCategoryDTO>.Success(dto, 200));
+            return StatusCode(StatusCodes.Status200OK, Response<ImageCategoryDTO>.Success(dto, StatusCodes.Status200OK));
         }
 
         [Authorize(Roles = $"{nameof(Roles.Admin)}")]
         [HttpPost]
-        public async Task<ActionResult<Response<ImageCategoryDTO>>> Create(ImageCategoryDTO dto)
+        public async Task<IActionResult> Create(ImageCategoryDTO dto)
         {
             if (dto == null)
             {
-                return BadRequest(Response<ImageCategoryDTO>.Failure(new Error("BadRequest", "Payload is null."), 400));
+                return StatusCode(StatusCodes.Status400BadRequest, Response<ImageCategoryDTO>.Failure(new Error("BadRequest", "Payload is null."), StatusCodes.Status400BadRequest));
             }
 
             var created = await _service.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, Response<ImageCategoryDTO>.Success(created, 201));
+            return StatusCode(StatusCodes.Status201Created, Response<ImageCategoryDTO>.Success(created, StatusCodes.Status201Created));
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult<Response<ImageCategoryDTO>>> Update(int id, ImageCategoryDTO dto)
+        public async Task<IActionResult> Update(int id, ImageCategoryDTO dto)
         {
             if (dto == null)
             {
-                return BadRequest(Response<ImageCategoryDTO>.Failure(new Error("BadRequest", "Payload is null."), 400));
+                return StatusCode(StatusCodes.Status400BadRequest, Response<ImageCategoryDTO>.Failure(new Error("BadRequest", "Payload is null."), StatusCodes.Status400BadRequest));
             }
 
             if (dto.Id != 0 && dto.Id != id)
             {
-                return BadRequest(Response<ImageCategoryDTO>.Failure(new Error("BadRequest", "Id mismatch."), 400));
+                return StatusCode(StatusCodes.Status400BadRequest, Response<ImageCategoryDTO>.Failure(new Error("BadRequest", "Id mismatch."), StatusCodes.Status400BadRequest));
             }
 
             var updated = await _service.UpdateAsync(id, dto);
             if (updated == null)
             {
-                return NotFound(Response<ImageCategoryDTO>.Failure(new Error("NotFound", "ImageCategory not found."), 404));
+                return StatusCode(StatusCodes.Status400BadRequest, Response<ImageCategoryDTO>.Failure(new Error("NotFound", "ImageCategory not found."), StatusCodes.Status400BadRequest));
             }
 
-            return Ok(Response<ImageCategoryDTO>.Success(updated, 200));
+            return StatusCode(StatusCodes.Status200OK, Response<ImageCategoryDTO>.Success(updated, StatusCodes.Status200OK));
         }
 
         [HttpDelete("{id:int}")]
-        public async Task<ActionResult<Response<object>>> Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
             var removed = await _service.DeleteAsync(id);
             if (!removed)
             {
-                return NotFound(Response<object>.Failure(new Error("NotFound", "ImageCategory not found."), 404));
+                return StatusCode(StatusCodes.Status400BadRequest, Response<object>.Failure(new Error("NotFound", "ImageCategory not found."), StatusCodes.Status400BadRequest));
             }
 
-            return StatusCode(204, Response<object>.Success(null, 204));
+            return StatusCode(StatusCodes.Status200OK, Response<object>.Success(null, StatusCodes.Status200OK));
         }
     }
 }

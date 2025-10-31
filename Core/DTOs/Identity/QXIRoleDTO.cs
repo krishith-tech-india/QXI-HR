@@ -1,4 +1,7 @@
 
+using Core.Enums;
+using Newtonsoft.Json;
+
 namespace Core.DTOs
 {
     public class QXIRoleDTO
@@ -6,6 +9,8 @@ namespace Core.DTOs
         public int Id { get; set; }
         public string RoleName { get; set; } = null!;
         public string Description { get; set; } = null!;
-        public ICollection<QXIUserRoleDTO>? UserRoles { get; set; }
+
+        [JsonIgnore]
+        public Roles Role => Enum.Parse<Roles>(RoleName, true);
     }
 }
