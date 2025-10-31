@@ -18,26 +18,23 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Create appsettings.json from secret
-        run: |
-          echo "$APPSETTINGS_JSON" > API/appsettings.json
-        env:
-          APPSETTINGS_JSON: ${{ secrets.APPSETTINGS_JSON }}
-
-      - name: Publish .NET API
-        run: |
-          cd API
-          dotnet publish -c Release -o publish
-
       - name: Deploy to Server
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.SERVER_IP }}
           username: deploy
           key: ${{ secrets.DEPLOY_SSH_KEY }}
+          envs: APPSETTINGS_JSON
           script: |
             cd /var/webapps/QXI-HR/repo
             git pull origin main
+
+            # Create appsettings.json from secret on server
+            echo "$APPSETTINGS_JSON" > API/appsettings.json
+
+            # Build and deploy
             cd API
             dotnet publish -c Release -o /var/webapps/QXI-HR/API/publish
             sudo systemctl restart qxihr-api
+        env:
+          APPSETTINGS_JSON: ${{ secrets.APPSETTINGS_JSON }}
