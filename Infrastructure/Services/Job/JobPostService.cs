@@ -34,7 +34,6 @@ namespace Infrastructure.Services
 
         public async Task<PagedResponse<JobPostDTO>> GetAllAsync(RequestParams requestParams)
         {
-
             Expression<Func<JobPost, object>> sort = x => x.Id; // Default sort
             Expression<Func<JobPost, bool>> filter = PredicateBuilder.BuildFilterExpression<JobPost>(requestParams.Filters);
             if (!string.IsNullOrWhiteSpace(requestParams.SearchKeyword))

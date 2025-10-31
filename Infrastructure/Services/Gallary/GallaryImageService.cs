@@ -1,8 +1,11 @@
+using System.Linq.Expressions;
 using Core.DTOs;
 using Core.DTOs.Common;
+using Core.Helpers;
 using Data.Models;
 using Data.Reopsitories;
 using Mapster;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Services
@@ -31,12 +34,6 @@ namespace Infrastructure.Services
             return true;
         }
 
-        public async Task<IEnumerable<GallaryImageDTO>> GetAllAsync()
-        {
-            var list = await _repo.GetAll(true).ToListAsync();
-            return list.Adapt<IEnumerable<GallaryImageDTO>>();
-        }
-
         public async Task<GallaryImageDTO?> GetByIdAsync(int id)
         {
             var e = await _repo.GetByIdAsync(id);
@@ -60,9 +57,31 @@ namespace Infrastructure.Services
             return list.Adapt<IEnumerable<GallaryImageDTO>>();
         }
 
-        public Task<PagedResponse<GallaryImageDTO>> GetAllAsync(RequestParams requestParams)
+        public async Task<PagedResponse<GallaryImageDTO>> GetAllAsync(RequestParams requestParams)
         {
-            throw new NotImplementedException();
+            Expression<Func<GallaryImage, object>> sort = x => x.Id; // Default sort
+            Expression<Func<GallaryImage, bool>> filter = PredicateBuilder.BuildFilterExpression<GallaryImage>(requestParams.Filters);
+            if (!string.IsNullOrWhiteSpace(requestParams.SearchKeyword))
+            {
+                requestParams.SearchKeyword = requestParams.SearchKeyword.Trim().ToLikeFilterString(Operator.Contains);
+                Expression<Func<GallaryImage, bool>> searchExpr = gi => EF.Functions.Like(gi.Description, requestParams.SearchKeyword)
+                                                                   || EF.Functions.Like(gi.Title, requestParams.SearchKeyword);
+
+                filter = filter == null ? searchExpr : PredicateBuilder.And(filter, searchExpr);
+            }
+
+
+            if (!string.IsNullOrWhiteSpace(requestParams.SortBy))
+            {
+                sort = PredicateBuilder.BuildSortExpression<GallaryImage>(requestParams.SortBy);
+            }
+
+            (var total, var query) = await _repo.PagedQueryAsync(filter, sort, requestParams.Page, requestParams.PageSize);
+
+            var list = await query.Adapt<IQueryable<GallaryImageDTO>>().ToListAsync();
+
+            return PagedResponse<GallaryImageDTO>.Success(list, total, requestParams, StatusCodes.Status200OK);
+
         }
     }
 }

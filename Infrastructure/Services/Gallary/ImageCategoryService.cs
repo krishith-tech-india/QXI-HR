@@ -1,8 +1,11 @@
+using System.Linq.Expressions;
 using Core.DTOs;
 using Core.DTOs.Common;
+using Core.Helpers;
 using Data.Models;
 using Data.Reopsitories;
 using Mapster;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Services
@@ -29,15 +32,30 @@ namespace Infrastructure.Services
             return true;
         }
 
-        public async Task<IEnumerable<ImageCategoryDTO>> GetAllAsync()
+        public async Task<PagedResponse<ImageCategoryDTO>> GetAllAsync(RequestParams requestParams)
         {
-            var list = await _repo.GetAll(false).ToListAsync();
-            return list.Adapt<IEnumerable<ImageCategoryDTO>>();
-        }
+            Expression<Func<ImageCategory, object>> sort = x => x.Id; // Default sort
+            Expression<Func<ImageCategory, bool>> filter = PredicateBuilder.BuildFilterExpression<ImageCategory>(requestParams.Filters);
+            if (!string.IsNullOrWhiteSpace(requestParams.SearchKeyword))
+            {
+                requestParams.SearchKeyword = requestParams.SearchKeyword.Trim().ToLikeFilterString(Operator.Contains);
+                Expression<Func<ImageCategory, bool>> searchExpr = ja => EF.Functions.Like(ja.Name, requestParams.SearchKeyword);
 
-        public Task<PagedResponse<ImageCategoryDTO>> GetAllAsync(RequestParams requestParams)
-        {
-            throw new NotImplementedException();
+                filter = filter == null ? searchExpr : PredicateBuilder.And(filter, searchExpr);
+            }
+
+
+            if (!string.IsNullOrWhiteSpace(requestParams.SortBy))
+            {
+                sort = PredicateBuilder.BuildSortExpression<ImageCategory>(requestParams.SortBy);
+            }
+
+            (var total, var query) = await _repo.PagedQueryAsync(filter, sort, requestParams.Page, requestParams.PageSize);
+
+            var list = await query.Adapt<IQueryable<ImageCategoryDTO>>().ToListAsync();
+
+            return PagedResponse<ImageCategoryDTO>.Success(list, total, requestParams, StatusCodes.Status200OK);
+
         }
 
         public async Task<ImageCategoryDTO?> GetByIdAsync(int id)

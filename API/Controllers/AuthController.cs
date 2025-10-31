@@ -1,5 +1,4 @@
 ﻿using Core.DTOs.Common;
-using Core.Enums;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,16 +24,16 @@ namespace API.Controllers
             var user = await _userService.AuthenticateUser(request);
 
             if (user == null)
-                return Unauthorized(Response<AuthRespDto>.Failure(new Error("Unauthorized", "Username or password are incorrect."), StatusCodes.Status401Unauthorized));
+                return StatusCode(StatusCodes.Status401Unauthorized, Response<AuthRespDto>.Failure(new Error("StatusCode", "Username or password are incorrect."), StatusCodes.Status401Unauthorized));
 
 
             //var userRole = user.Roles?.FirstOrDefault();
 
             if (user.Roles == null || user.Roles.Count <= 0)
-                return Unauthorized(Response<AuthRespDto>.Failure(new Error("Unauthorized", "Roles are not assigned to user."), StatusCodes.Status401Unauthorized));
+                return StatusCode(StatusCodes.Status401Unauthorized, Response<AuthRespDto>.Failure(new Error("StatusCode", "Roles are not assigned to user."), StatusCodes.Status401Unauthorized));
 
             // Dummy validation
-            var auth = _jwtService.GenerateToken(request.UsernameOrEmail, [..user.Roles?.Select(x=> x.Role)]);
+            var auth = _jwtService.GenerateToken(request.UsernameOrEmail, [..user.Roles.Select(x=> x.Role)]);
 
             return StatusCode(StatusCodes.Status200OK, Response<AuthRespDto>.Success(auth, 200));
         }
