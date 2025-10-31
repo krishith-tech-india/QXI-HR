@@ -18,6 +18,12 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Create appsettings.json from secret
+        run: |
+          echo "$APPSETTINGS_JSON" > API/appsettings.json
+        env:
+          APPSETTINGS_JSON: ${{ secrets.APPSETTINGS_JSON }}
+
       - name: Publish .NET API
         run: |
           cd API
