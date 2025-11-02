@@ -27,25 +27,25 @@ jobs:
           envs: APPSETTINGS_JSON
           script: |
             # Ensure base folders exist
-            sudo mkdir -p /var/webapps/QXI-HR/repo
-            sudo mkdir -p /var/webapps/QXI-HR/API
+            mkdir -p /var/webapps/QXI-HR/repo
+            mkdir -p /var/webapps/QXI-HR/API
 
             # Clone repo if missing
             if [ ! -d "/var/webapps/QXI-HR/repo/.git" ]; then
               cd /var/webapps/QXI-HR
-              sudo git clone https://github.com/krishith-tech-india/QXI-HR.git repo
+              git clone https://github.com/krishith-tech-india/QXI-HR.git repo
             fi
 
             # Pull latest code
             cd /var/webapps/QXI-HR/repo
-            sudo git pull origin main
+            git pull origin main
 
             # Build the project and publish to live folder
             cd /var/webapps/QXI-HR/repo/API
             dotnet publish -c Release -o /var/webapps/QXI-HR/API
 
             # Place appsettings.json (from secret) in live API folder
-            echo "$APPSETTINGS_JSON" | sudo tee /var/webapps/QXI-HR/API/appsettings.json > /dev/null
+            echo "$APPSETTINGS_JSON" | tee /var/webapps/QXI-HR/API/appsettings.json > /dev/null
 
             # Restart API service
-            sudo systemctl restart qxihr-api
+            systemctl restart qxihr-api
