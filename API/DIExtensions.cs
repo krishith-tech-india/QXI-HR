@@ -40,8 +40,6 @@ namespace API
                 });
 
             });
-
-            
         }
 
         public static void AddJWT(this IServiceCollection services, IConfiguration configuration)
