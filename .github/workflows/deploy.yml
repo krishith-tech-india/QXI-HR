@@ -26,6 +26,13 @@ jobs:
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           envs: APPSETTINGS_JSON
           script: |
+            # Ensure folder exists and clone if missing
+            if [ ! -d "/var/webapps/QXI-HR/repo/.git" ]; then
+              sudo mkdir -p /var/webapps/QXI-HR/repo
+              cd /var/webapps/QXI-HR
+              sudo git clone https://github.com/<your-username>/<your-repo>.git repo
+            fi
+
             cd /var/webapps/QXI-HR/repo
             git pull origin main
 
