@@ -30,7 +30,7 @@ jobs:
             if [ ! -d "/var/webapps/QXI-HR/repo/.git" ]; then
               sudo mkdir -p /var/webapps/QXI-HR/repo
               cd /var/webapps/QXI-HR
-              sudo git clone https://github.com/<your-username>/<your-repo>.git repo
+              sudo git clone https://github.com/krishith-tech-india/QXI-HR.git repo
             fi
 
             cd /var/webapps/QXI-HR/repo
