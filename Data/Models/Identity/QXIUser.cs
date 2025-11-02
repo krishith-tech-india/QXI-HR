@@ -6,8 +6,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Data.Models
 {
     [Table("Users")]
-    [Index(nameof(Email), Name = "UQ_Users_Email", IsUnique = true)]
-    [Index(nameof(PhoneNumber), Name = "UQ_Users_PhoneNumber", IsUnique = true)]
     public class QXIUser : EntityBase
     {
         [Key]

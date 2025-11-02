@@ -6,7 +6,6 @@ using Core.Enums;
 namespace Data.Models.Identity
 {
     [Table("Roles")]
-    [Index(nameof(RoleName), IsUnique = true, Name = "UQ_Roles_RoleName")]
     public class QXIRole : EntityBase
     {
         [Key]

@@ -53,8 +53,13 @@ namespace Data.DbContexts
                         ),
                         parameter
                     );
+
+                    modelBuilder.Entity(entityType.ClrType).HasIndex("IsActive").HasDatabaseName($"IX_{entityType.GetTableName()}_IsActive");
+
                     modelBuilder.Entity(entityType.ClrType).HasQueryFilter(filter);
                 });
+
+            string isActiveFilter = "\"IsActive\" = true";
 
 
             modelBuilder.Entity<QXIUser>(entity =>
@@ -64,6 +69,9 @@ namespace Data.DbContexts
                       .WithOne(ur => ur.User)
                       .HasForeignKey(ur => ur.UserId)
                       .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(e => e.Email).IsUnique(true).HasDatabaseName("UQ_Users_Email").HasFilter(isActiveFilter);
+                entity.HasIndex(e => e.PhoneNumber).IsUnique(true).HasDatabaseName("UQ_Users_PhoneNumber").HasFilter(isActiveFilter);
             });
 
             modelBuilder.Entity<QXIRole>(entity =>
@@ -73,6 +81,8 @@ namespace Data.DbContexts
                       .WithOne(ur => ur.Role)
                       .HasForeignKey(ur => ur.RoleId)
                       .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(e => e.RoleName).IsUnique(true).HasDatabaseName("UQ_Roles_RoleName").HasFilter(isActiveFilter);
             });
 
             modelBuilder.Entity<QXIUserRole>(entity =>

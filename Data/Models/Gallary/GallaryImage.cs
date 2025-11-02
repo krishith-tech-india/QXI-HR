@@ -6,7 +6,7 @@ namespace Data.Models
 {
     [Table("GallaryImages")]
     [Index(nameof(CategoryId), Name = "IX_GallaryImages_CategoryId")]
-    public class GallaryImage
+    public class GallaryImage : EntityBase
     {
         [Key]
         public int Id { get; set; }
