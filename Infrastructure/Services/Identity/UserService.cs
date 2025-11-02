@@ -12,51 +12,60 @@ namespace Infrastructure.Services
 {
     public class UserService : IUserService
     {
-        private readonly IRepository<QXIUser> _repo;
-        public UserService(IRepository<QXIUser> repo) => _repo = repo;
+        private readonly IRepository<QXIUser> _userRepo;
+        private readonly IRepository<QXIUserRole> _userRoleRepo;
+        public UserService(
+                            IRepository<QXIUser> userRepo,
+                            IRepository<QXIUserRole> userRoleRepo
+                            )
+        {
+            _userRepo = userRepo;
+            _userRoleRepo = userRoleRepo;
+        }
 
         public async Task<QXIUserDTO> CreateAsync(QXIUserDTO dto)
         {
             var e = dto.Adapt<QXIUser>();
-            _repo.Insert(e);
-            await _repo.SaveChangesAsync();
+            e.UserRoles = dto.RoleIds!.Select(x => new QXIUserRole { RoleId = x, IsActive = true}).ToList();
+            _userRepo.Insert(e);
+            await _userRepo.SaveChangesAsync();
             return e.Adapt<QXIUserDTO>();
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var e = await _repo.GetByIdAsync(id);
+            var e = await _userRepo.GetByIdAsync(id);
             if (e == null) return false;
-            _repo.Delete(e);
-            await _repo.SaveChangesAsync();
+            _userRepo.Delete(e);
+            await _userRepo.SaveChangesAsync();
             return true;
         }
 
         public async Task<IEnumerable<QXIUserDTO>> GetAllAsync()
         {
-            var list = await _repo.GetAll(false).ToListAsync();
+            var list = await _userRepo.GetAll(false).ToListAsync();
             return list.Adapt<IEnumerable<QXIUserDTO>>();
         }
 
         public async Task<QXIUserDTO?> GetByIdAsync(int id)
         {
-            var e = await _repo.Query(u => u.Id == id, false).Include(u => u.UserRoles).FirstOrDefaultAsync();
+            var e = await _userRepo.Query(u => u.Id == id, false).Include(u => u.UserRoles).FirstOrDefaultAsync();
             return e?.Adapt<QXIUserDTO>();
         }
 
         public async Task<QXIUserDTO?> UpdateAsync(int id, QXIUserDTO dto)
         {
-            var e = await _repo.GetByIdAsync(id);
+            var e = await _userRepo.GetByIdAsync(id);
             if (e == null) return null;
             dto.Adapt(e);
-            _repo.Update(e);
-            await _repo.SaveChangesAsync();
+            _userRepo.Update(e);
+            await _userRepo.SaveChangesAsync();
             return e.Adapt<QXIUserDTO>();
         }
 
         public async Task<QXIUserDTO?> AuthenticateUser(AuthRequestDto auth)
         {
-            var user = await _repo.Query(u => u.Email.Equals(auth.UsernameOrEmail) && u.Password.Equals(auth.Password), true)
+            var user = await _userRepo.Query(u => u.Email.Equals(auth.UsernameOrEmail) && u.Password.Equals(auth.Password), true)
                                   .Include(u => u.UserRoles)
                                   .ThenInclude(ur => ur.Role)
                                   .FirstOrDefaultAsync();
@@ -87,11 +96,11 @@ namespace Infrastructure.Services
                 sort = PredicateBuilder.BuildSortExpression<QXIUser>(requestParams.SortBy);
             }
 
-            (var total, var query) = await _repo.PagedQueryAsync(filter, sort, requestParams.Page, requestParams.PageSize);
+            (var total, var query) = await _userRepo.PagedQueryAsync(filter, sort, requestParams.Page, requestParams.PageSize);
 
-            var list = await query.Adapt<IQueryable<QXIUserDTO>>().ToListAsync();
+            var list = await query.ToListAsync();
 
-            return PagedResponse<QXIUserDTO>.Success(list, total, requestParams, StatusCodes.Status200OK);
+            return PagedResponse<QXIUserDTO>.Success(list.Adapt<List<QXIUserDTO>>(), total, requestParams, StatusCodes.Status200OK);
 
         }
     }

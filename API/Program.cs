@@ -32,6 +32,7 @@ builder.Services.AddControllers().AddNewtonsoftJson(opt =>
     opt.SerializerSettings.DateFormatString = "dddd, dd, MMMM, yyyy hh:mm:ss tt K";
     opt.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
     opt.SerializerSettings.DateTimeZoneHandling = DateTimeZoneHandling.Utc;
+    opt.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
 });
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

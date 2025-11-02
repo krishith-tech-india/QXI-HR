@@ -9,6 +9,8 @@ namespace API
     {
         public static void AddCoreDependencies(this IServiceCollection services, IConfiguration configuration, string corsPolicy)
         {
+
+            services.AddHttpContextAccessor();
             AppSettings? appSettings = configuration.GetSection("AppSettings").Get<AppSettings>();
 
             services.AddJWT(configuration);

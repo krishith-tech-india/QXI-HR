@@ -10,7 +10,10 @@ namespace Core.DTOs
         public string? LinkedInProfileUrl { get; set; }
         public string PhoneNumber { get; set; } = null!;
         public string? Position { get; set; }
-        public string? ProfilePictureUrl { get; set; } = null!;
+        public string? ProfilePictureUrl { get; set; }
+        public string? Password { get; set; }
+        public bool IsActive { get; set; }
+        public ICollection<int>? RoleIds { get; set; }
         public ICollection<QXIRoleDTO>? Roles { get; set; }
     }
 }

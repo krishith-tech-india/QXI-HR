@@ -19,7 +19,7 @@ namespace Data.Models
 
         [StringLength(100)]
         [Unicode(false)]
-        public string LastName { get; set; } = null!;
+        public string? LastName { get; set; }
 
         [StringLength(500)]
         [Unicode(false)]
@@ -27,7 +27,7 @@ namespace Data.Models
 
 
         [StringLength(500), DataType(DataType.Url)]
-        public string ProfilePictureUrl { get; set; } = null!;
+        public string? ProfilePictureUrl { get; set; }
 
         [StringLength(1000), DataType(DataType.MultilineText)]
         public string? Bio { get; set; }
@@ -37,7 +37,7 @@ namespace Data.Models
 
         [StringLength(50), DataType(DataType.Text)]
         [Unicode(false)]
-        public string Position { get; set; } = null!;
+        public string? Position { get; set; }
 
         [StringLength(15)]
         [Unicode(false)]
