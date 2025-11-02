@@ -19,15 +19,29 @@ namespace API
 
             object value = services.AddCors(options =>
             {
-                options.AddPolicy(name: corsPolicy,
-                                  policy =>
-                                  {
-                                      policy.WithOrigins(appSettings!.ClientList)
-                                      .AllowAnyHeader()
-                                      .AllowAnyMethod()
-                                      .WithExposedHeaders("Content-Disposition");
-                                  });
+                options.AddPolicy(corsPolicy, policy =>
+                {
+                    if (appSettings!.ClientList.Contains("*"))
+                    {
+                        // Allow all origins (for development/testing)
+                        policy.AllowAnyOrigin()
+                            .AllowAnyHeader()
+                            .AllowAnyMethod()
+                            .WithExposedHeaders("Content-Disposition");
+                    }
+                    else
+                    {
+                        // Allow only the configured origins
+                        policy.WithOrigins(appSettings!.ClientList.ToArray())
+                            .AllowAnyHeader()
+                            .AllowAnyMethod()
+                            .WithExposedHeaders("Content-Disposition");
+                    }
+                });
+
             });
+
+            
         }
 
         public static void AddJWT(this IServiceCollection services, IConfiguration configuration)
