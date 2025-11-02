@@ -36,9 +36,11 @@ jobs:
               git clone https://github.com/krishith-tech-india/QXI-HR.git repo
             fi
 
-            # Pull latest code
             cd /var/webapps/QXI-HR/repo
-            git pull origin main
+
+            # Always reset repo to remote state
+            git fetch origin main
+            git reset --hard origin/main
 
             # Build the project and publish to live folder
             cd /var/webapps/QXI-HR/repo/API
@@ -48,4 +50,6 @@ jobs:
             echo "$APPSETTINGS_JSON" > /var/webapps/QXI-HR/API/appsettings.json
 
             # Restart API service
-            systemctl restart qxihr-api
+            sudo systemctl restart qxihr-api
+        env:
+          APPSETTINGS_JSON: ${{ secrets.APPSETTINGS_JSON }}
