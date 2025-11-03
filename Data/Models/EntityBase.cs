@@ -18,6 +18,6 @@ namespace Data.Models
         [MaxLength(500), DataType(DataType.EmailAddress)]
         public string? UpdatedBy { get; set; }
 
-        public bool IsActive { get; set; }
+        public bool IsActive { get; set; } = true;
     }
 }

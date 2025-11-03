@@ -118,6 +118,9 @@ namespace Core.Helpers
                 filterValue = filterValue?.ToString()?.ToLikeFilterString(filterOperator);
             }
 
+            if (string.IsNullOrWhiteSpace(filterValue?.ToString()))
+                return null;
+
             ConstantExpression constant = Expression.Constant(filterValue);
 
             // Determine how we want to apply the expression
@@ -125,14 +128,35 @@ namespace Core.Helpers
             {
                 Operator.Equals => Expression.Equal(member, constant),
                 Operator.NotEquals => Expression.NotEqual(member, constant),
-                Operator.Contains => Expression.Call(EF.Functions.GetType().GetMethod("Like")!, member, constant),
+                Operator.Contains => Expression.Call(
+                    typeof(DbFunctionsExtensions),
+                    nameof(DbFunctionsExtensions.Like),
+                    Type.EmptyTypes,
+                    Expression.Constant(EF.Functions),
+                    member,
+                    constant
+                ),
                 Operator.GreaterThan => Expression.GreaterThan(member, constant),
                 Operator.GreaterThanOrEqual => Expression.GreaterThanOrEqual(member, constant),
                 Operator.LessThan => Expression.LessThan(member, constant),
                 Operator.LessThanOrEqualTo => Expression.LessThanOrEqual(member, constant),
-                Operator.StartsWith => Expression.Call(EF.Functions.GetType().GetMethod("Like")!, member, constant),
-                Operator.EndsWith => Expression.Call(EF.Functions.GetType().GetMethod("Like")!, member, constant),
-                _ => null!,
+                Operator.StartsWith => Expression.Call(
+                    typeof(DbFunctionsExtensions),
+                    nameof(DbFunctionsExtensions.Like),
+                    Type.EmptyTypes,
+                    Expression.Constant(EF.Functions),
+                    member,
+                    constant
+                ),
+                Operator.EndsWith => Expression.Call(
+                    typeof(DbFunctionsExtensions),
+                    nameof(DbFunctionsExtensions.Like),
+                    Type.EmptyTypes,
+                    Expression.Constant(EF.Functions),
+                    member,
+                    constant
+                ),
+                _ => throw new Exception($"Unsupported operator: {filterOperator}")
             };
         }
         private static Expression CombineExpressions(Expression left, Expression right, string? condition)

@@ -36,7 +36,7 @@ namespace Core.Helpers
 
         public static string ToLikeFilterString(this string value, Operator compareOperator)
         {
-            if (!string.IsNullOrEmpty(value))
+            if (string.IsNullOrEmpty(value))
                 return string.Empty;
 
             var retVal = value.Replace("[", "[[]")

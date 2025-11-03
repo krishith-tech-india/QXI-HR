@@ -24,6 +24,6 @@ namespace Core.DTOs
         public string? FieldName { get; set; }
         public object? Value { get; set; }
         public string? Condition { get; set; } = "and";
-        public string? Operator { get; set; } = "equals";
+        public string? Operator { get; set; } = "Contains";
     }
 }

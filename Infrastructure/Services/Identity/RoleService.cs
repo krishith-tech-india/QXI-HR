@@ -67,7 +67,7 @@ namespace Infrastructure.Services
                 sort = PredicateBuilder.BuildSortExpression<QXIRole>(requestParams.SortBy);
             }
 
-            (var total, var query) = await _repo.PagedQueryAsync(filter, sort, requestParams.Page, requestParams.PageSize);
+            (var total, var query) = await _repo.PagedQueryAsync(filter, sort, requestParams.Page, requestParams.PageSize, requestParams.IsDescending);
 
             var list = await query.ToListAsync();
 
