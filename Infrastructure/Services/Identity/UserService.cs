@@ -79,13 +79,13 @@ namespace Infrastructure.Services
             if (!string.IsNullOrWhiteSpace(requestParams.SearchKeyword))
             {
                 requestParams.SearchKeyword = requestParams.SearchKeyword.Trim().ToLikeFilterString(Operator.Contains);
-                Expression<Func<QXIUser, bool>> searchExpr = ja => EF.Functions.Like(ja.FirstName, requestParams.SearchKeyword)
-                                                                   || EF.Functions.Like(ja.LastName, requestParams.SearchKeyword)
-                                                                   || EF.Functions.Like(ja.Email, requestParams.SearchKeyword)
-                                                                   || EF.Functions.Like(ja.Position, requestParams.SearchKeyword)
-                                                                   || EF.Functions.Like(ja.PhoneNumber, requestParams.SearchKeyword)
-                                                                   || EF.Functions.Like(ja.LinkedInProfileUrl, requestParams.SearchKeyword)
-                                                                   || EF.Functions.Like(ja.Bio, requestParams.SearchKeyword);
+                Expression<Func<QXIUser, bool>> searchExpr = ja => EF.Functions.ILike(ja.FirstName, requestParams.SearchKeyword)
+                                                                   || EF.Functions.ILike(ja.LastName, requestParams.SearchKeyword)
+                                                                   || EF.Functions.ILike(ja.Email, requestParams.SearchKeyword)
+                                                                   || EF.Functions.ILike(ja.Position, requestParams.SearchKeyword)
+                                                                   || EF.Functions.ILike(ja.PhoneNumber, requestParams.SearchKeyword)
+                                                                   || EF.Functions.ILike(ja.LinkedInProfileUrl, requestParams.SearchKeyword)
+                                                                   || EF.Functions.ILike(ja.Bio, requestParams.SearchKeyword);
 
                 filter = filter == null ? searchExpr : PredicateBuilder.And(filter, searchExpr);
             }

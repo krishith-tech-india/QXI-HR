@@ -55,8 +55,8 @@ namespace Infrastructure.Services
             if (!string.IsNullOrWhiteSpace(requestParams.SearchKeyword))
             {
                 requestParams.SearchKeyword = requestParams.SearchKeyword.Trim().ToLikeFilterString(Operator.Contains);
-                Expression<Func<QXIRole, bool>> searchExpr = ja => EF.Functions.Like(ja.RoleName, requestParams.SearchKeyword)
-                                                                   || EF.Functions.Like(ja.Description, requestParams.SearchKeyword);
+                Expression<Func<QXIRole, bool>> searchExpr = ja => EF.Functions.ILike(ja.RoleName, requestParams.SearchKeyword)
+                                                                   || EF.Functions.ILike(ja.Description, requestParams.SearchKeyword);
 
                 filter = filter == null ? searchExpr : PredicateBuilder.And(filter, searchExpr);
             }

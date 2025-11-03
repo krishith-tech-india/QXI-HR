@@ -39,8 +39,8 @@ namespace Infrastructure.Services
             if(!string.IsNullOrWhiteSpace(requestParams.SearchKeyword))
             {
                 requestParams.SearchKeyword = requestParams.SearchKeyword.Trim().ToLikeFilterString(Operator.Contains);
-                Expression<Func<JobApplication, bool>> searchExpr = ja => EF.Functions.Like(ja.ApplicantName, requestParams.SearchKeyword) 
-                || EF.Functions.Like(ja.ApplicantEmail, requestParams.SearchKeyword);
+                Expression<Func<JobApplication, bool>> searchExpr = ja => EF.Functions.ILike(ja.ApplicantName, requestParams.SearchKeyword) 
+                || EF.Functions.ILike(ja.ApplicantEmail, requestParams.SearchKeyword);
 
                 filter = filter == null ? searchExpr : PredicateBuilder.And(filter, searchExpr);
             }

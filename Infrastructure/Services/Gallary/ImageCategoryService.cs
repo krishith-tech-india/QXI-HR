@@ -39,7 +39,7 @@ namespace Infrastructure.Services
             if (!string.IsNullOrWhiteSpace(requestParams.SearchKeyword))
             {
                 requestParams.SearchKeyword = requestParams.SearchKeyword.Trim().ToLikeFilterString(Operator.Contains);
-                Expression<Func<ImageCategory, bool>> searchExpr = ja => EF.Functions.Like(ja.Name, requestParams.SearchKeyword);
+                Expression<Func<ImageCategory, bool>> searchExpr = ja => EF.Functions.ILike(ja.Name, requestParams.SearchKeyword);
 
                 filter = filter == null ? searchExpr : PredicateBuilder.And(filter, searchExpr);
             }
