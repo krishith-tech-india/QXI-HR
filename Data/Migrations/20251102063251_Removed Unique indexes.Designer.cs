@@ -3,6 +3,7 @@ using System;
 using Data.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Data.Migrations
 {
     [DbContext(typeof(QXIDbContext))]
-    partial class QXIDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251102063251_Removed Unique indexes")]
+    partial class RemovedUniqueindexes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -119,11 +122,6 @@ namespace Data.Migrations
 
                     b.HasIndex("IsActive")
                         .HasDatabaseName("IX_Roles_IsActive");
-
-                    b.HasIndex("RoleName")
-                        .IsUnique()
-                        .HasDatabaseName("UQ_Roles_RoleName")
-                        .HasFilter("\"IsActive\" = true");
 
                     b.ToTable("Roles");
                 });
@@ -380,18 +378,8 @@ namespace Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Email")
-                        .IsUnique()
-                        .HasDatabaseName("UQ_Users_Email")
-                        .HasFilter("\"IsActive\" = true");
-
                     b.HasIndex("IsActive")
                         .HasDatabaseName("IX_Users_IsActive");
-
-                    b.HasIndex("PhoneNumber")
-                        .IsUnique()
-                        .HasDatabaseName("UQ_Users_PhoneNumber")
-                        .HasFilter("\"IsActive\" = true");
 
                     b.ToTable("Users");
                 });
