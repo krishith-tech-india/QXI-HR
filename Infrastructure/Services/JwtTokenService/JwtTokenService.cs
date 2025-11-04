@@ -3,7 +3,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Core.DTOs;
-using Core.DTOs.Common;
 using Core.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;

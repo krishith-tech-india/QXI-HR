@@ -209,5 +209,19 @@ namespace Data.Reopsitories
 
         #endregion AsyncMethods
 
+        /// <summary>
+        /// Attaches an existing entity to the DbContext without fetching it from the database.
+        /// </summary>
+        public void Attach(TEntity entity)
+        {
+            if (entity == null) return;
+
+            var entry = dbContext.Entry(entity);
+            if (entry.State == EntityState.Detached)
+            {
+                dbSet.Attach(entity);
+            }
+        }
+
     }
 }

@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Amazon.S3;
+using Amazon.Runtime;
 
 namespace API
 {
@@ -14,6 +16,7 @@ namespace API
             AppSettings? appSettings = configuration.GetSection("AppSettings").Get<AppSettings>();
 
             services.AddJWT(configuration);
+            services.AddR2Settings(configuration);
 
             object value1 = services.AddHttpContextAccessor();
 
@@ -68,5 +71,28 @@ namespace API
                 };
             });
         }
+
+        public static void AddR2Settings(this IServiceCollection services, IConfiguration configuration)
+        {
+            // Bind R2 settings
+            R2Settings? r2Settings = configuration.GetSection("CloudflareR2").Get<R2Settings>();
+            if (r2Settings == null)
+                throw new Exception("CloudflareR2 section missing in appsettings.json");
+
+            // Configure R2 endpoint
+            var awsConfig = new AmazonS3Config
+            {
+                ServiceURL = r2Settings.ServiceUrl,
+                ForcePathStyle = true,
+                AuthenticationRegion = "auto" 
+            };
+
+            var creds = new BasicAWSCredentials(r2Settings.AccessKeyId, r2Settings.SecretAccessKey);
+            var s3Client = new AmazonS3Client(creds, awsConfig);
+
+            // Register for dependency injection
+            services.AddSingleton<IAmazonS3>(s3Client);
+            services.AddSingleton(r2Settings); // so you can inject R2Settings later if needed
+        } 
     }
 }

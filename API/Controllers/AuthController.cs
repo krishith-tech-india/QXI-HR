@@ -1,4 +1,4 @@
-﻿using Core.DTOs.Common;
+﻿using Core.DTOs;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 

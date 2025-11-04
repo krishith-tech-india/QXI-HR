@@ -1,4 +1,4 @@
-﻿namespace Core.DTOs.Common
+﻿namespace Core.DTOs
 {
     public class Error(string message, string description = "")
     {

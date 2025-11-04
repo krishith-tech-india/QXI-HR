@@ -1,5 +1,4 @@
 using Core.DTOs;
-using Core.DTOs.Common;
 
 namespace Infrastructure.Services
 {

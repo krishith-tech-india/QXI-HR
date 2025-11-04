@@ -208,9 +208,6 @@ namespace Data.Migrations
                     b.Property<int>("JobPostId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("JobPostId1")
-                        .HasColumnType("integer");
-
                     b.Property<string>("ResumeUrl")
                         .HasMaxLength(500)
                         .IsUnicode(false)
@@ -227,8 +224,6 @@ namespace Data.Migrations
 
                     b.HasIndex("IsActive")
                         .HasDatabaseName("IX_JobApplications_IsActive");
-
-                    b.HasIndex("JobPostId1");
 
                     b.HasIndex(new[] { "JobPostId" }, "IX_JobApplications_JobPostId");
 
@@ -448,14 +443,10 @@ namespace Data.Migrations
             modelBuilder.Entity("Data.Models.JobApplication", b =>
                 {
                     b.HasOne("Data.Models.JobPost", "JobPost")
-                        .WithMany()
+                        .WithMany("Applications")
                         .HasForeignKey("JobPostId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Data.Models.JobPost", null)
-                        .WithMany("Applications")
-                        .HasForeignKey("JobPostId1");
 
                     b.Navigation("JobPost");
                 });

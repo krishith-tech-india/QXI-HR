@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core.DTOs.Common
+namespace Core.DTOs
 {
     public class PagedResponse<T> : Response<IEnumerable<T>>
     {

@@ -1,4 +1,4 @@
-using Core.DTOs.Common;
+using Core.DTOs;
 using Core.Enums;
 
 namespace Infrastructure.Services;

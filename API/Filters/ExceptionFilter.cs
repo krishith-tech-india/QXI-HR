@@ -1,5 +1,5 @@
 ﻿using Core;
-using Core.DTOs.Common;
+using Core.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 

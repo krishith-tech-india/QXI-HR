@@ -1,5 +1,6 @@
+using Amazon.S3;
+using Amazon.S3.Model;
 using Core.DTOs;
-using Core.DTOs.Common;
 using Core.Helpers;
 using Data.Models;
 using Data.Reopsitories;
@@ -12,23 +13,39 @@ namespace Infrastructure.Services
 {
     public class JobApplicationService : IJobApplicationService
     {
-        private readonly IRepository<JobApplication> _repo;
-        public JobApplicationService(IRepository<JobApplication> repo) => _repo = repo;
+        private readonly IRepository<JobApplication> _jobApplicationRepo;
+        private readonly IRepository<JobPost> _jobPostRepo;
+        private readonly IAmazonS3 _s3Client;
+        private readonly R2Settings _r2Settings;
+        public JobApplicationService(
+                IRepository<JobApplication> repo,
+                IAmazonS3 s3Client,
+                R2Settings r2Settings,
+                IRepository<JobPost> jobPostRepo
+            )
+        {
+            _jobApplicationRepo = repo;
+             _s3Client = s3Client;
+            _r2Settings = r2Settings;
+            _jobPostRepo = jobPostRepo;
+        } 
 
         public async Task<JobApplicationDTO> CreateAsync(JobApplicationDTO dto)
         {
             var entity = dto.Adapt<JobApplication>();
-            _repo.Insert(entity);
-            await _repo.SaveChangesAsync();
+            entity.JobPost = null;
+
+            _jobApplicationRepo.Insert(entity);
+            await _jobApplicationRepo.SaveChangesAsync();
             return entity.Adapt<JobApplicationDTO>();
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var e = await _repo.GetByIdAsync(id);
+            var e = await _jobApplicationRepo.GetByIdAsync(id);
             if (e == null) return false;
-            _repo.Delete(e);
-            await _repo.SaveChangesAsync();
+            _jobApplicationRepo.Delete(e);
+            await _jobApplicationRepo.SaveChangesAsync();
             return true;
         }
 
@@ -51,7 +68,7 @@ namespace Infrastructure.Services
                 sort = PredicateBuilder.BuildSortExpression<JobApplication>(requestParams.SortBy);
             }
 
-            (var total, var query) = await _repo.PagedQueryAsync(filter, sort, requestParams.Page, requestParams.PageSize, requestParams.IsDescending);
+            (var total, var query) = await _jobApplicationRepo.PagedQueryAsync(filter, sort, requestParams.Page, requestParams.PageSize, requestParams.IsDescending);
                 
             var list = await query.ToListAsync();
 
@@ -60,24 +77,49 @@ namespace Infrastructure.Services
 
         public async Task<JobApplicationDTO?> GetByIdAsync(int id)
         {
-            var e = await _repo.Query(a => a.Id == id, false).Include(a => a.JobPost).FirstOrDefaultAsync();
+            var e = await _jobApplicationRepo.Query(a => a.Id == id, false).Include(a => a.JobPost).FirstOrDefaultAsync();
             return e?.Adapt<JobApplicationDTO>();
         }
 
         public async Task<JobApplicationDTO?> UpdateAsync(int id, JobApplicationDTO dto)
         {
-            var e = await _repo.GetByIdAsync(id);
+            var e = await _jobApplicationRepo.GetByIdAsync(id);
             if (e == null) return null;
             dto.Adapt(e);
-            _repo.Update(e);
-            await _repo.SaveChangesAsync();
+            _jobApplicationRepo.Update(e);
+            await _jobApplicationRepo.SaveChangesAsync();
             return e.Adapt<JobApplicationDTO>();
         }
 
         public async Task<IEnumerable<JobApplicationDTO>> GetByJobPostIdAsync(int jobPostId)
         {
-            var list = await _repo.Query(a => a.JobPostId == jobPostId, true).ToListAsync();
+            var list = await _jobApplicationRepo.Query(a => a.JobPostId == jobPostId, true).ToListAsync();
             return list.Adapt<IEnumerable<JobApplicationDTO>>();
+        }
+
+        public async Task<ResumePresignedUrlDto> GetUploadUrl(string filename)
+        {
+            if (string.IsNullOrEmpty(filename))
+                throw new Exception("Filename is required.");
+
+            var key = $"{Guid.NewGuid()}_{filename}";
+            var request = new GetPreSignedUrlRequest
+            {
+                BucketName = _r2Settings.BucketName,
+                Key = key,
+                Verb = HttpVerb.PUT,
+                Expires = DateTime.UtcNow.AddMinutes(_r2Settings.PreSignedUrlExpiryInMinutes),
+                ContentType = "application/octet-stream"
+            };
+
+            var url = await _s3Client.GetPreSignedURLAsync(request);
+            var fileAccessUrl = $"{_r2Settings.ServiceUrl}/{_r2Settings.BucketName}/{key}";
+
+            return new ResumePresignedUrlDto
+            {
+                uploadUrl = url,
+                fileUrl = fileAccessUrl
+            };
         }
     }
 }

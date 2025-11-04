@@ -1,6 +1,6 @@
 using System;
 
-namespace Core.DTOs.Common;
+namespace Core.DTOs;
 
 public class AuthRequestDto
 {

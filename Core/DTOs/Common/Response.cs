@@ -1,4 +1,4 @@
-﻿namespace Core.DTOs.Common
+﻿namespace Core.DTOs
 {
     public class Response<T> : ResponseBase
     {

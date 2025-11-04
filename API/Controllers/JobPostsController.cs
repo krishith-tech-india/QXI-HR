@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Core.DTOs;
-using Core.DTOs.Common;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 

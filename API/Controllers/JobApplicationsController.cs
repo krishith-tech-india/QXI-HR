@@ -1,5 +1,4 @@
 using Core.DTOs;
-using Core.DTOs.Common;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,7 +10,10 @@ namespace API.Controllers
     {
         private readonly IJobApplicationService _service;
 
-        public JobApplicationsController(IJobApplicationService service) => _service = service;
+        public JobApplicationsController(IJobApplicationService service)
+        {
+            _service = service;
+        } 
 
         [HttpPost]
         public async Task<IActionResult> GetAll(RequestParams dto)
@@ -82,6 +84,19 @@ namespace API.Controllers
             }
 
             return StatusCode(StatusCodes.Status200OK, Response<object>.Success(null, StatusCodes.Status200OK));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetUploadUrl(string filename)
+        {
+            if (string.IsNullOrWhiteSpace(filename))
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, Response<ResumePresignedUrlDto>.Failure(new Error("NotFound", "JobApplication not found."), StatusCodes.Status400BadRequest));
+            }
+
+            var preSignedUrlDto = await _service.GetUploadUrl(filename);
+
+            return StatusCode(StatusCodes.Status200OK, Response<ResumePresignedUrlDto>.Success(preSignedUrlDto, StatusCodes.Status200OK));
         }
     }
 }

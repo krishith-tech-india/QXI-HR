@@ -1,5 +1,4 @@
 using Core.DTOs;
-using Core.DTOs.Common;
 using Core.Enums;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;

@@ -134,5 +134,11 @@ namespace Data.Reopsitories
                                                                int pageSize,
                                                                bool isDescending = false,
                                                                bool asNoTracking = true);
+
+
+        /// <summary>
+        /// Attaches an existing entity to the DbContext without fetching it from the database.
+        /// </summary>
+        void Attach(TEntity entity);
     }
 }

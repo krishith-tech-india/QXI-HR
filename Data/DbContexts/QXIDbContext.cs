@@ -119,19 +119,11 @@ namespace Data.DbContexts
             modelBuilder.Entity<JobPost>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.HasMany(e => e.Applications)
-                      .WithOne(navigationExpression: e => e.JobPost)
-                      .HasForeignKey(e => e.JobPostId)
-                      .OnDelete(DeleteBehavior.Cascade);
-            });
 
-            modelBuilder.Entity<JobApplication>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.HasOne(e => e.JobPost)
-                      .WithMany()
-                      .HasForeignKey(e => e.JobPostId)
-                      .OnDelete(DeleteBehavior.Cascade);
+                entity.HasMany(jp => jp.Applications)
+                    .WithOne(ja => ja.JobPost)
+                    .HasForeignKey(ja => ja.JobPostId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             base.OnModelCreating(modelBuilder);

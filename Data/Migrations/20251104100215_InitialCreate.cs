@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Data.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialMigration : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -80,12 +80,12 @@ namespace Data.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     FirstName = table.Column<string>(type: "character varying(100)", unicode: false, maxLength: 100, nullable: false),
-                    LastName = table.Column<string>(type: "character varying(100)", unicode: false, maxLength: 100, nullable: false),
+                    LastName = table.Column<string>(type: "character varying(100)", unicode: false, maxLength: 100, nullable: true),
                     Email = table.Column<string>(type: "character varying(500)", unicode: false, maxLength: 500, nullable: false),
-                    ProfilePictureUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    ProfilePictureUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     Bio = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     LinkedInProfileUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    Position = table.Column<string>(type: "character varying(50)", unicode: false, maxLength: 50, nullable: false),
+                    Position = table.Column<string>(type: "character varying(50)", unicode: false, maxLength: 50, nullable: true),
                     PhoneNumber = table.Column<string>(type: "character varying(15)", unicode: false, maxLength: 15, nullable: false),
                     Password = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -109,7 +109,12 @@ namespace Data.Migrations
                     Description = table.Column<string>(type: "text", unicode: false, nullable: true),
                     ImageUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     CategoryId = table.Column<int>(type: "integer", nullable: true),
-                    ImageCategoryId = table.Column<int>(type: "integer", nullable: true)
+                    ImageCategoryId = table.Column<int>(type: "integer", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreatedBy = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    UpdatedBy = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -139,7 +144,6 @@ namespace Data.Migrations
                     ResumeUrl = table.Column<string>(type: "character varying(500)", unicode: false, maxLength: 500, nullable: true),
                     CoverLetterUrl = table.Column<string>(type: "character varying(500)", unicode: false, maxLength: 500, nullable: true),
                     JobPostId = table.Column<int>(type: "integer", nullable: false),
-                    JobPostId1 = table.Column<int>(type: "integer", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     CreatedBy = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
@@ -155,11 +159,6 @@ namespace Data.Migrations
                         principalTable: "JobPosts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_JobApplications_JobPosts_JobPostId1",
-                        column: x => x.JobPostId1,
-                        principalTable: "JobPosts",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -202,20 +201,46 @@ namespace Data.Migrations
                 column: "ImageCategoryId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_GallaryImages_IsActive",
+                table: "GallaryImages",
+                column: "IsActive");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ImageCategories_IsActive",
+                table: "ImageCategories",
+                column: "IsActive");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_JobApplications_IsActive",
+                table: "JobApplications",
+                column: "IsActive");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_JobApplications_JobPostId",
                 table: "JobApplications",
                 column: "JobPostId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_JobApplications_JobPostId1",
-                table: "JobApplications",
-                column: "JobPostId1");
+                name: "IX_JobPosts_IsActive",
+                table: "JobPosts",
+                column: "IsActive");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Roles_IsActive",
+                table: "Roles",
+                column: "IsActive");
 
             migrationBuilder.CreateIndex(
                 name: "UQ_Roles_RoleName",
                 table: "Roles",
                 column: "RoleName",
-                unique: true);
+                unique: true,
+                filter: "\"IsActive\" = true");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserRoles_IsActive",
+                table: "UserRoles",
+                column: "IsActive");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserRoles_RoleId",
@@ -223,16 +248,23 @@ namespace Data.Migrations
                 column: "RoleId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Users_IsActive",
+                table: "Users",
+                column: "IsActive");
+
+            migrationBuilder.CreateIndex(
                 name: "UQ_Users_Email",
                 table: "Users",
                 column: "Email",
-                unique: true);
+                unique: true,
+                filter: "\"IsActive\" = true");
 
             migrationBuilder.CreateIndex(
                 name: "UQ_Users_PhoneNumber",
                 table: "Users",
                 column: "PhoneNumber",
-                unique: true);
+                unique: true,
+                filter: "\"IsActive\" = true");
         }
 
         /// <inheritdoc />

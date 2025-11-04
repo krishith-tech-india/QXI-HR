@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Data.Migrations
 {
     [DbContext(typeof(QXIDbContext))]
-    [Migration("20251102063251_Removed Unique indexes")]
-    partial class RemovedUniqueindexes
+    [Migration("20251104100215_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -123,6 +123,11 @@ namespace Data.Migrations
                     b.HasIndex("IsActive")
                         .HasDatabaseName("IX_Roles_IsActive");
 
+                    b.HasIndex("RoleName")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_Roles_RoleName")
+                        .HasFilter("\"IsActive\" = true");
+
                     b.ToTable("Roles");
                 });
 
@@ -206,9 +211,6 @@ namespace Data.Migrations
                     b.Property<int>("JobPostId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("JobPostId1")
-                        .HasColumnType("integer");
-
                     b.Property<string>("ResumeUrl")
                         .HasMaxLength(500)
                         .IsUnicode(false)
@@ -225,8 +227,6 @@ namespace Data.Migrations
 
                     b.HasIndex("IsActive")
                         .HasDatabaseName("IX_JobApplications_IsActive");
-
-                    b.HasIndex("JobPostId1");
 
                     b.HasIndex(new[] { "JobPostId" }, "IX_JobApplications_JobPostId");
 
@@ -378,8 +378,18 @@ namespace Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Email")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_Users_Email")
+                        .HasFilter("\"IsActive\" = true");
+
                     b.HasIndex("IsActive")
                         .HasDatabaseName("IX_Users_IsActive");
+
+                    b.HasIndex("PhoneNumber")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_Users_PhoneNumber")
+                        .HasFilter("\"IsActive\" = true");
 
                     b.ToTable("Users");
                 });
@@ -436,14 +446,10 @@ namespace Data.Migrations
             modelBuilder.Entity("Data.Models.JobApplication", b =>
                 {
                     b.HasOne("Data.Models.JobPost", "JobPost")
-                        .WithMany()
+                        .WithMany("Applications")
                         .HasForeignKey("JobPostId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Data.Models.JobPost", null)
-                        .WithMany("Applications")
-                        .HasForeignKey("JobPostId1");
 
                     b.Navigation("JobPost");
                 });
