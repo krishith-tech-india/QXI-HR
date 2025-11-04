@@ -32,9 +32,15 @@ namespace Infrastructure.Services
 
         public async Task<JobApplicationDTO> CreateAsync(JobApplicationDTO dto)
         {
+            bool alreadyExists = await _jobApplicationRepo
+                        .Query(x => x.JobPostId == dto.JobPostId && (x.ApplicantEmail == dto.ApplicantEmail || x.ApplicantPhoneNumber == dto.ApplicantPhoneNumber))
+                        .AnyAsync();
+
+            if (alreadyExists)
+                throw new Exception("You have already applied for this job.");
+        
             var entity = dto.Adapt<JobApplication>();
             entity.JobPost = null;
-
             _jobApplicationRepo.Insert(entity);
             await _jobApplicationRepo.SaveChangesAsync();
             return entity.Adapt<JobApplicationDTO>();
@@ -109,7 +115,6 @@ namespace Infrastructure.Services
                 Key = key,
                 Verb = HttpVerb.PUT,
                 Expires = DateTime.UtcNow.AddMinutes(_r2Settings.PreSignedUrlExpiryInMinutes),
-                ContentType = "application/octet-stream"
             };
 
             var url = await _s3Client.GetPreSignedURLAsync(request);
