@@ -111,7 +111,7 @@ namespace Infrastructure.Services
             };
 
             var url = await _s3Client.GetPreSignedURLAsync(request);
-            var fileAccessUrl = $"{_r2Settings.ServiceUrl}/{key}";
+            var fileAccessUrl = $"{_r2Settings.CustomDomain}/{key}";
 
             return new ResumePresignedUrlDto
             {

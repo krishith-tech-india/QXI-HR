@@ -8,5 +8,6 @@ public class R2Settings
     public string SecretAccessKey { get; set; } = string.Empty;
     public string ServiceUrl { get; set; } = string.Empty;
     public string BucketName { get; set; } = string.Empty;
+    public string CustomDomain { get; set; } = string.Empty;
     public int PreSignedUrlExpiryInMinutes { get; set; }
 }
