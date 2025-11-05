@@ -15,6 +15,23 @@ namespace API.Controllers
             _service = service;
         } 
 
+        [HttpGet]
+        public async Task<IActionResult> SendVerificationCode(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, Response<object>.Failure(new Error("BadRequest", "Email is required."), StatusCodes.Status400BadRequest));
+            }
+
+            var sent = await _service.SendVerificationCodeAsync(email);
+            if (!sent)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, Response<object>.Failure(new Error("EmailFailure", "Failed to send verification code."), StatusCodes.Status500InternalServerError));
+            }
+
+            return StatusCode(StatusCodes.Status200OK, Response<object>.Success(null, StatusCodes.Status200OK));
+        }
+
         [HttpPost]
         public async Task<IActionResult> GetAll(RequestParams dto)
         {
@@ -103,6 +120,20 @@ namespace API.Controllers
         public async Task<IActionResult> CheckApplicationExist(JobApplicationDTO dto)
         {
             return StatusCode(StatusCodes.Status200OK, Response<bool>.Success(await _service.CheckApplicationExist(dto), StatusCodes.Status200OK));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> VerifyEmailCode([FromBody] VerifyEmailCodeRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, 
+                    Response<bool>.Failure(new Error("BadRequest", "Invalid request. Email and verification code are required."), 
+                    StatusCodes.Status400BadRequest));
+            }
+
+            var isValid = await _service.VerifyEmailCodeAsync(request.Email, request.VerificationCode);
+            return StatusCode(StatusCodes.Status200OK, Response<bool>.Success(isValid, StatusCodes.Status200OK));
         }
     }
 }

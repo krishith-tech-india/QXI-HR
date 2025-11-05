@@ -36,6 +36,6 @@ namespace Data.Models
         [Unicode(false)]
         public string Experience { get; set; }
 
-        public virtual ICollection<JobApplication> Applications { get; set; } = [];
+        public virtual ICollection<JobApplication> Applications { get; set; } = new List<JobApplication>();
     }
 }

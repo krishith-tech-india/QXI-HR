@@ -18,6 +18,8 @@ namespace Data.DbContexts
 
         public virtual DbSet<JobPost> JobPosts { get; set; }
 
+        public virtual DbSet<EmailVerificationCode> EmailVerificationCodes { get; set; }
+
         public virtual DbSet<GallaryImage> GallaryImages { get; set; }
 
         public virtual DbSet<ImageCategory> ImageCategories { get; set; }
@@ -124,6 +126,13 @@ namespace Data.DbContexts
                     .WithOne(ja => ja.JobPost)
                     .HasForeignKey(ja => ja.JobPostId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<EmailVerificationCode>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                // create unique index on Email for active records
+                entity.HasIndex(e => e.Email).IsUnique(true).HasDatabaseName("UQ_EmailVerificationCodes_Email").HasFilter(isActiveFilter);
             });
 
             base.OnModelCreating(modelBuilder);

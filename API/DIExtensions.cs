@@ -18,6 +18,13 @@ namespace API
             services.AddJWT(configuration);
             services.AddR2Settings(configuration);
 
+            // Bind EmailSettings from configuration and register for DI
+            var emailSettings = configuration.GetSection("EmailSettings").Get<EmailSettings>();
+            if (emailSettings != null)
+            {
+                services.AddSingleton(emailSettings);
+            }
+
             object value1 = services.AddHttpContextAccessor();
 
             object value = services.AddCors(options =>
