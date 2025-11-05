@@ -7,5 +7,7 @@ namespace Infrastructure.Services
         Task<IEnumerable<JobApplicationDTO>> GetByJobPostIdAsync(int jobPostId);
 
         Task<ResumePresignedUrlDto> GetUploadUrl(string filename);
+
+        Task<bool> CheckApplicationExist(JobApplicationDTO dto);
     }
 }

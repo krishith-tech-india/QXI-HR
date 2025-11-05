@@ -31,14 +31,7 @@ namespace Infrastructure.Services
         } 
 
         public async Task<JobApplicationDTO> CreateAsync(JobApplicationDTO dto)
-        {
-            bool alreadyExists = await _jobApplicationRepo
-                        .Query(x => x.JobPostId == dto.JobPostId && (x.ApplicantEmail == dto.ApplicantEmail || x.ApplicantPhoneNumber == dto.ApplicantPhoneNumber))
-                        .AnyAsync();
-
-            if (alreadyExists)
-                throw new Exception("You have already applied for this job.");
-        
+        {        
             var entity = dto.Adapt<JobApplication>();
             entity.JobPost = null;
             _jobApplicationRepo.Insert(entity);
@@ -118,13 +111,20 @@ namespace Infrastructure.Services
             };
 
             var url = await _s3Client.GetPreSignedURLAsync(request);
-            var fileAccessUrl = $"{_r2Settings.ServiceUrl}/{_r2Settings.BucketName}/{key}";
+            var fileAccessUrl = $"{_r2Settings.ServiceUrl}/{key}";
 
             return new ResumePresignedUrlDto
             {
                 uploadUrl = url,
                 fileUrl = fileAccessUrl
             };
+        }
+
+        public async Task<bool> CheckApplicationExist(JobApplicationDTO dto)
+        {
+            return await _jobApplicationRepo
+                        .Query(x => x.JobPostId == dto.JobPostId && (x.ApplicantEmail == dto.ApplicantEmail || x.ApplicantPhoneNumber == dto.ApplicantPhoneNumber))
+                        .AnyAsync();
         }
     }
 }

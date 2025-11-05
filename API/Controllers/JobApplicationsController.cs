@@ -98,5 +98,11 @@ namespace API.Controllers
 
             return StatusCode(StatusCodes.Status200OK, Response<ResumePresignedUrlDto>.Success(preSignedUrlDto, StatusCodes.Status200OK));
         }
+
+        [HttpPost]
+        public async Task<IActionResult> CheckApplicationExist(JobApplicationDTO dto)
+        {
+            return StatusCode(StatusCodes.Status200OK, Response<bool>.Success(await _service.CheckApplicationExist(dto), StatusCodes.Status200OK));
+        }
     }
 }
