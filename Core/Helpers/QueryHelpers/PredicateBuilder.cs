@@ -128,25 +128,34 @@ namespace Core.Helpers
             {
                 Operator.Equals => Expression.Equal(member, constant),
                 Operator.NotEquals => Expression.NotEqual(member, constant),
-                Operator.Contains => prop.PropertyType == typeof(string)
-                    ? Expression.Equal(
-                        Expression.Call(member, "ToLower", Type.EmptyTypes),
-                        Expression.Call(constant, "ToLower", Type.EmptyTypes))
-                    : Expression.Equal(member, constant),
+                Operator.Contains => Expression.Call(
+                    typeof(DbFunctionsExtensions),
+                    nameof(DbFunctionsExtensions.Like),
+                    Type.EmptyTypes,
+                    Expression.Constant(EF.Functions),
+                    member,
+                    constant
+                ),
                 Operator.GreaterThan => Expression.GreaterThan(member, constant),
                 Operator.GreaterThanOrEqual => Expression.GreaterThanOrEqual(member, constant),
                 Operator.LessThan => Expression.LessThan(member, constant),
                 Operator.LessThanOrEqualTo => Expression.LessThanOrEqual(member, constant),
-                Operator.StartsWith => prop.PropertyType == typeof(string)
-                    ? Expression.Equal(
-                        Expression.Call(member, "ToLower", Type.EmptyTypes),
-                        Expression.Call(constant, "ToLower", Type.EmptyTypes))
-                    : Expression.Equal(member, constant),
-                Operator.EndsWith => prop.PropertyType == typeof(string)
-                    ? Expression.Equal(
-                        Expression.Call(member, "ToLower", Type.EmptyTypes),
-                        Expression.Call(constant, "ToLower", Type.EmptyTypes))
-                    : Expression.Equal(member, constant),
+                Operator.StartsWith => Expression.Call(
+                    typeof(DbFunctionsExtensions),
+                    nameof(DbFunctionsExtensions.Like),
+                    Type.EmptyTypes,
+                    Expression.Constant(EF.Functions),
+                    member,
+                    constant
+                ),
+                Operator.EndsWith => Expression.Call(
+                    typeof(DbFunctionsExtensions),
+                    nameof(DbFunctionsExtensions.Like),
+                    Type.EmptyTypes,
+                    Expression.Constant(EF.Functions),
+                    member,
+                    constant
+                ),
                 _ => throw new Exception($"Unsupported operator: {filterOperator}")
             };
         }
@@ -175,7 +184,9 @@ namespace Core.Helpers
 
             protected override Expression VisitParameter(ParameterExpression p)
             {
-                if (map.TryGetValue(p, out var replacement))
+                ParameterExpression replacement;
+
+                if (map.TryGetValue(p, out replacement))
                 {
                     p = replacement;
                 }
