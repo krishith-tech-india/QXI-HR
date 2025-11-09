@@ -42,13 +42,49 @@ namespace Infrastructure.Services
 
         public async Task<IEnumerable<QXIUserDTO>> GetAllAsync()
         {
-            var list = await _userRepo.GetAll(false).ToListAsync();
+
+            var list = await _userRepo.GetAll(false)
+                    .Select(u => new QXIUserDTO
+                    {
+                        Id = u.Id,
+                        FirstName = u.FirstName,
+                        LastName = u.LastName,
+                        Bio = u.Bio,
+                        LinkedInProfileUrl = u.LinkedInProfileUrl,
+                        PhoneNumber = u.PhoneNumber,
+                        Position = u.Position,
+                        ProfilePictureUrl = u.ProfilePictureUrl,
+                        Email = u.Email,
+                        Password = "********"   // masked value
+                    })
+                    .ToListAsync();
             return list.Adapt<IEnumerable<QXIUserDTO>>();
         }
 
         public async Task<QXIUserDTO?> GetByIdAsync(int id)
         {
-            var e = await _userRepo.Query(u => u.Id == id, false).Include(u => u.UserRoles).FirstOrDefaultAsync();
+            var e = await _userRepo.Query(u => u.Id == id, false)
+                        .Include(u => u.UserRoles)
+                        .Select(u => new QXIUserDTO
+                        {
+                            Id = u.Id,
+                            FirstName = u.FirstName,
+                            LastName = u.LastName,
+                            Bio = u.Bio,
+                            LinkedInProfileUrl = u.LinkedInProfileUrl,
+                            PhoneNumber = u.PhoneNumber,
+                            Position = u.Position,
+                            ProfilePictureUrl = u.ProfilePictureUrl,
+                            Email = u.Email,
+                            Password = "********",  // masked value
+                            Roles = u.UserRoles!.Where(ur => ur.IsActive).Select(ur => new QXIRoleDTO
+                            {
+                                Id = ur.Role!.Id,
+                                RoleName = ur.Role.RoleName,
+                                Description = ur.Role.Description
+                            }).ToList()
+                        })
+                        .FirstOrDefaultAsync();
             return e?.Adapt<QXIUserDTO>();
         }
 
@@ -56,10 +92,27 @@ namespace Infrastructure.Services
         {
             var e = await _userRepo.GetByIdAsync(id);
             if (e == null) return null;
-            dto.Adapt(e);
+            // Keep existing password if none provided or empty
+            if (string.IsNullOrWhiteSpace(dto.Password))
+                dto.Password = e.Password;
+
+            e.FirstName = dto.FirstName;
+            e.LastName = dto.LastName;
+            e.ProfilePictureUrl = dto.ProfilePictureUrl;
+            e.Bio = dto.Bio;
+            e.LinkedInProfileUrl = dto.LinkedInProfileUrl;
+            e.Position = dto.Position;
+            e.PhoneNumber = dto.PhoneNumber;
+            e.Password = dto.Password!;
+            
             _userRepo.Update(e);
             await _userRepo.SaveChangesAsync();
-            return e.Adapt<QXIUserDTO>();
+            
+            // hide password before returning
+            var result = e.Adapt<QXIUserDTO>();
+            result.Password = "********";
+
+            return result;
         }
 
         public async Task<QXIUserDTO?> AuthenticateUser(AuthRequestDto auth)
