@@ -219,7 +219,7 @@ namespace Infrastructure.Services
                 return false;
 
             var trimmedEmail = email.Trim();
-            
+
             // Find active verification record for this email
             var verification = await _emailVerificationRepo
                 .Query(x => x.Email == trimmedEmail && x.IsActive, false)
@@ -230,6 +230,58 @@ namespace Infrastructure.Services
 
             // Compare the codes (case-sensitive)
             return verification.VerificationCode == verificationCode;
+        }
+        
+        public async Task<bool> SendEMailContactMessage(MailContactMessageDto messageDto)
+        {
+
+            // attempt to send email if settings are available
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(_emailSettings?.SmtpHost))
+                {
+                    using var smtp = new System.Net.Mail.SmtpClient(_emailSettings.SmtpHost, _emailSettings.SmtpPort);
+                    smtp.EnableSsl = _emailSettings.EnableSsl;
+                    if (!string.IsNullOrWhiteSpace(_emailSettings.SmtpUser))
+                    {
+                        smtp.Credentials = new System.Net.NetworkCredential(_emailSettings.SmtpUser, _emailSettings.SmtpPass);
+                    }
+
+                    var fromAddress = !string.IsNullOrWhiteSpace(_emailSettings?.FromEmail) ? _emailSettings.FromEmail : _emailSettings?.SmtpUser;
+                    var fromName = _emailSettings?.FromName ?? string.Empty;
+
+                    if (string.IsNullOrWhiteSpace(fromAddress))
+                    {
+                        // fallback to a safe noreply address to avoid MailMessage throwing
+                        fromAddress = "noreply@localhost";
+                    }
+
+                    var mail = new System.Net.Mail.MailMessage()
+                    {
+                        From = new System.Net.Mail.MailAddress(fromAddress, fromName),
+                        Subject = messageDto.Subject,
+                        Body = $"Name: {messageDto.Name}\n" +
+                               $"Customer Email: {messageDto.Email}\n" +
+                               $"PhoneNo: {messageDto.PhoneNo}\n" +
+                               $"Company: {messageDto.Comapny}\n\n" +
+                               $"Message:\n{messageDto.Message}",
+                        IsBodyHtml = false
+                    };
+                    mail.To.Add(fromAddress);
+
+                    await smtp.SendMailAsync(mail);
+                    _logger?.LogInformation("Verification email sent to {Email}", fromAddress);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // log the exception so we can see why sending failed
+                _logger?.LogError(ex, "Failed to send contact email by {Email}", messageDto.Email);
+                // email send failed, but verification saved to DB - return false to indicate send failed
+                return false;
+            }
         }
     }
 }

@@ -13,7 +13,7 @@ namespace API.Controllers
         public JobApplicationsController(IJobApplicationService service)
         {
             _service = service;
-        } 
+        }
 
         [HttpGet]
         public async Task<IActionResult> SendVerificationCode(string email)
@@ -24,6 +24,25 @@ namespace API.Controllers
             }
 
             var sent = await _service.SendVerificationCodeAsync(email);
+            if (!sent)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, Response<object>.Failure(new Error("EmailFailure", "Failed to send verification code."), StatusCodes.Status500InternalServerError));
+            }
+
+            return StatusCode(StatusCodes.Status200OK, Response<object>.Success(null, StatusCodes.Status200OK));
+        }
+        
+        [HttpPost]
+        public async Task<IActionResult> SendEMailContactMessage(MailContactMessageDto messageDto)
+        {
+            if (string.IsNullOrWhiteSpace(messageDto.Name) || string.IsNullOrWhiteSpace(messageDto.Email) ||
+                    string.IsNullOrWhiteSpace(messageDto.Subject) || string.IsNullOrWhiteSpace(messageDto.PhoneNo) ||
+                    string.IsNullOrWhiteSpace(messageDto.Message) || string.IsNullOrWhiteSpace(messageDto.Comapny))
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, Response<object>.Failure(new Error("BadRequest", "All required Fields are not filled."), StatusCodes.Status400BadRequest));
+            }
+
+            var sent = await _service.SendEMailContactMessage(messageDto);
             if (!sent)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, Response<object>.Failure(new Error("EmailFailure", "Failed to send verification code."), StatusCodes.Status500InternalServerError));

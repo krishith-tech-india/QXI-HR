@@ -1,5 +1,4 @@
 using Core.DTOs;
-
 namespace Infrastructure.Services
 {
     public interface IJobApplicationService : IEntityCrudService<JobApplicationDTO>
@@ -15,5 +14,6 @@ namespace Infrastructure.Services
 
         // Verifies a stored verification code against the provided code
         Task<bool> VerifyEmailCodeAsync(string email, string verificationCode);
+        Task<bool> SendEMailContactMessage(MailContactMessageDto messageDto);
     }
 }
