@@ -32,7 +32,6 @@ namespace API.Controllers
             return StatusCode(StatusCodes.Status200OK, Response<ImageCategoryDTO>.Success(dto, StatusCodes.Status200OK));
         }
 
-        [Authorize(Roles = $"{nameof(Roles.Admin)}")]
         [HttpPost]
         public async Task<IActionResult> Create(ImageCategoryDTO dto)
         {

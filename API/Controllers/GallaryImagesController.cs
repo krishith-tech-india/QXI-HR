@@ -30,7 +30,7 @@ namespace API.Controllers
             return StatusCode(StatusCodes.Status200OK, Response<GallaryImageDTO>.Success(dto, StatusCodes.Status200OK));
         }
 
-        [HttpGet("ByCategory/{categoryId:int}")]
+        [HttpGet("{categoryId:int}")]
         public async Task<IActionResult> GetByCategory(int categoryId)
         {
             var list = await _service.GetByCategoryAsync(categoryId);
