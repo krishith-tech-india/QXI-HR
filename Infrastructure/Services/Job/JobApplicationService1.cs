@@ -259,7 +259,7 @@ namespace Infrastructure.Services
                     var mail = new System.Net.Mail.MailMessage()
                     {
                         From = new System.Net.Mail.MailAddress(fromAddress, fromName),
-                        Subject = messageDto.Subject,
+                        Subject = $"UPDATE : Get {messageDto.Subject} message from website",
                         Body = $"Name: {messageDto.Name}\n" +
                                $"Customer Email: {messageDto.Email}\n" +
                                $"PhoneNo: {messageDto.PhoneNo}\n" +
