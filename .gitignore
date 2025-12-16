@@ -415,7 +415,7 @@ storybook-static/
 .pnp.*
 
 # API configuration
-API/appsettings*.json
+API/appsettings.json
 API/appsettings.json.bak
 
 # Local improvement notes

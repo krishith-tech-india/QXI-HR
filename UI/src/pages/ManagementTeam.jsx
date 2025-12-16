@@ -206,6 +206,9 @@ const ManagementTeam = () => {
                 <motion.div key={member.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: index * 0.1 }} className="bg-white rounded-xl shadow-lg overflow-hidden hover-lift flex flex-col">
                   <div className="relative">
                     <img src={member.profilePictureUrl || `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face`} alt={member.firstName} className="w-full h-64 object-cover" />
+                    {isAdmin && member.isPublic === false && (
+                      <span className="absolute top-4 left-4 px-2 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-700">Hidden</span>
+                    )}
                     {isAdmin && (
                       <div className="absolute top-4 right-4 flex space-x-2">
                         <Button size="icon" variant="secondary" onClick={() => openEditModal(member)} className="w-8 h-8 bg-white/90 hover:bg-white"><Edit className="w-4 h-4" /></Button>

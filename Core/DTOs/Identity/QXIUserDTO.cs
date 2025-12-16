@@ -12,6 +12,7 @@ namespace Core.DTOs
         public string? Position { get; set; }
         public string? ProfilePictureUrl { get; set; }
         public string? Password { get; set; }
+        public bool IsPublic { get; set; } = true;
         public bool IsActive { get; set; }
         public ICollection<int>? RoleIds { get; set; }
         public ICollection<QXIRoleDTO>? Roles { get; set; }

@@ -20,6 +20,7 @@ const getInitialFormData = (member) => ({
   position: member?.position || '',
   profilePictureUrl: member?.profilePictureUrl || '',
   profilePictureFile: null,
+  isPublic: member?.isPublic ?? true,
   roleIds: member?.roles?.map(r => r.id) || []
 });
 
@@ -214,6 +215,19 @@ const TeamMemberModal = ({ isOpen, onClose, onSubmit, member }) => {
             </div>
             <InputField label="Position" name="position" value={formData.position} onChange={(e) => setFormData({ ...formData, position: e.target.value })} />
             <InputField label="LinkedIn Profile" name="linkedin" type="url" value={formData.linkedInProfileUrl} onChange={(e) => setFormData({ ...formData, linkedInProfileUrl: e.target.value })} />
+          </div>
+          <div className="flex items-start space-x-3">
+            <input
+              id="isPublic"
+              type="checkbox"
+              checked={formData.isPublic}
+              onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })}
+              className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded"
+            />
+            <div>
+              <label htmlFor="isPublic" className="block text-sm font-medium text-gray-700">Publicly visible</label>
+              <p className="text-sm text-gray-500">Uncheck to hide this member from public listings while keeping their profile for admins.</p>
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>

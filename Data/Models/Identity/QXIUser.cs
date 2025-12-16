@@ -44,6 +44,8 @@ namespace Data.Models
         [StringLength(50)]
         public string Password { get; set; } = null!;
 
+        public bool IsPublic { get; set; } = true;
+
         public virtual ICollection<QXIUserRole> UserRoles { get; set; } = [];
     }
 }

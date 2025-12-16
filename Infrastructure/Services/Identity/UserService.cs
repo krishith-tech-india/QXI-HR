@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using Core.DTOs;
+using Core.Enums;
 using Core.Helpers;
 using Data.Models;
 using Data.Reopsitories;
@@ -13,18 +14,27 @@ namespace Infrastructure.Services
     {
         private readonly IRepository<QXIUser> _userRepo;
         private readonly IRepository<QXIUserRole> _userRoleRepo;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
+        private bool IsAdminOrStaff =>
+            _httpContextAccessor.HttpContext?.User?.IsInRole(Roles.Admin.ToString()) == true ||
+            _httpContextAccessor.HttpContext?.User?.IsInRole(Roles.Staff.ToString()) == true;
+
         public UserService(
                             IRepository<QXIUser> userRepo,
-                            IRepository<QXIUserRole> userRoleRepo
+                            IRepository<QXIUserRole> userRoleRepo,
+                            IHttpContextAccessor httpContextAccessor
                             )
         {
             _userRepo = userRepo;
             _userRoleRepo = userRoleRepo;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<QXIUserDTO> CreateAsync(QXIUserDTO dto)
         {
             var e = dto.Adapt<QXIUser>();
+            e.IsPublic = dto.IsPublic;
             e.UserRoles = dto.RoleIds!.Select(x => new QXIUserRole { RoleId = x, IsActive = true}).ToList();
             _userRepo.Insert(e);
             await _userRepo.SaveChangesAsync();
@@ -43,7 +53,14 @@ namespace Infrastructure.Services
         public async Task<IEnumerable<QXIUserDTO>> GetAllAsync()
         {
 
-            var list = await _userRepo.GetAll(false)
+            var query = _userRepo.GetAll(false);
+
+            if (!IsAdminOrStaff)
+            {
+                query = query.Where(u => u.IsPublic);
+            }
+
+            var list = await query
                     .Select(u => new QXIUserDTO
                     {
                         Id = u.Id,
@@ -55,7 +72,8 @@ namespace Infrastructure.Services
                         Position = u.Position,
                         ProfilePictureUrl = u.ProfilePictureUrl,
                         Email = u.Email,
-                        Password = "********"   // masked value
+                        Password = "********",   // masked value
+                        IsPublic = u.IsPublic
                     })
                     .ToListAsync();
             return list.Adapt<IEnumerable<QXIUserDTO>>();
@@ -77,6 +95,7 @@ namespace Infrastructure.Services
                             ProfilePictureUrl = u.ProfilePictureUrl,
                             Email = u.Email,
                             Password = "********",  // masked value
+                            IsPublic = u.IsPublic,
                             Roles = u.UserRoles!.Where(ur => ur.IsActive).Select(ur => new QXIRoleDTO
                             {
                                 Id = ur.Role!.Id,
@@ -85,6 +104,10 @@ namespace Infrastructure.Services
                             }).ToList()
                         })
                         .FirstOrDefaultAsync();
+            if (e != null && !IsAdminOrStaff && e.IsPublic == false)
+            {
+                return null;
+            }
             return e?.Adapt<QXIUserDTO>();
         }
 
@@ -104,6 +127,7 @@ namespace Infrastructure.Services
             e.Position = dto.Position;
             e.PhoneNumber = dto.PhoneNumber;
             e.Password = dto.Password!;
+            e.IsPublic = dto.IsPublic;
             
             _userRepo.Update(e);
             await _userRepo.SaveChangesAsync();
@@ -145,6 +169,11 @@ namespace Infrastructure.Services
                 filter = filter == null ? searchExpr : PredicateBuilder.And(filter, searchExpr);
             }
 
+            if (!IsAdminOrStaff)
+            {
+                Expression<Func<QXIUser, bool>> visibilityFilter = u => u.IsPublic;
+                filter = filter == null ? visibilityFilter : PredicateBuilder.And(filter, visibilityFilter);
+            }
 
             if (!string.IsNullOrWhiteSpace(requestParams.SortBy))
             {
