@@ -418,6 +418,9 @@ storybook-static/
 API/appsettings*.json
 API/appsettings.json.bak
 
+# Local improvement notes
+Improvements/
+
 # UI frontend
 UI/node_modules/
 UI/dist/
