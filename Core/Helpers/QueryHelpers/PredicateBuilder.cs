@@ -1,5 +1,6 @@
 ﻿using Core.DTOs;
 using Microsoft.EntityFrameworkCore;
+using Npgsql.EntityFrameworkCore.PostgreSQL;
 using System.Linq.Expressions;
 
 namespace Core.Helpers
@@ -72,7 +73,12 @@ namespace Core.Helpers
             var param = Expression.Parameter(typeof(T), "x");
             var body = Expression.Property(param, property);
 
-            return Expression.Lambda<Func<T, object>>(body, param);
+            // box value types so return type matches object
+            Expression converted = property.PropertyType.IsValueType
+                ? Expression.Convert(body, typeof(object))
+                : body;
+
+            return Expression.Lambda<Func<T, object>>(converted, param);
         }
         public static Expression<Func<T, bool>> BuildFilterExpression<T>(List<CommonFilterParams>? filters)
         {
@@ -123,14 +129,33 @@ namespace Core.Helpers
 
             ConstantExpression constant = Expression.Constant(filterValue);
 
-            // Determine how we want to apply the expression
+            // Determine how we want to apply the expression (string comparisons use ILike for case-insensitivity)
             return filterOperator switch
             {
-                Operator.Equals => Expression.Equal(member, constant),
-                Operator.NotEquals => Expression.NotEqual(member, constant),
+                Operator.Equals => prop.PropertyType == typeof(string)
+                    ? Expression.Call(
+                        typeof(NpgsqlDbFunctionsExtensions),
+                        nameof(NpgsqlDbFunctionsExtensions.ILike),
+                        Type.EmptyTypes,
+                        Expression.Constant(EF.Functions),
+                        member,
+                        constant
+                    )
+                    : Expression.Equal(member, constant),
+                Operator.NotEquals => prop.PropertyType == typeof(string)
+                    ? Expression.Not(
+                        Expression.Call(
+                            typeof(NpgsqlDbFunctionsExtensions),
+                            nameof(NpgsqlDbFunctionsExtensions.ILike),
+                            Type.EmptyTypes,
+                            Expression.Constant(EF.Functions),
+                            member,
+                            constant
+                        ))
+                    : Expression.NotEqual(member, constant),
                 Operator.Contains => Expression.Call(
-                    typeof(DbFunctionsExtensions),
-                    nameof(DbFunctionsExtensions.Like),
+                    typeof(NpgsqlDbFunctionsExtensions),
+                    nameof(NpgsqlDbFunctionsExtensions.ILike),
                     Type.EmptyTypes,
                     Expression.Constant(EF.Functions),
                     member,
@@ -141,16 +166,16 @@ namespace Core.Helpers
                 Operator.LessThan => Expression.LessThan(member, constant),
                 Operator.LessThanOrEqualTo => Expression.LessThanOrEqual(member, constant),
                 Operator.StartsWith => Expression.Call(
-                    typeof(DbFunctionsExtensions),
-                    nameof(DbFunctionsExtensions.Like),
+                    typeof(NpgsqlDbFunctionsExtensions),
+                    nameof(NpgsqlDbFunctionsExtensions.ILike),
                     Type.EmptyTypes,
                     Expression.Constant(EF.Functions),
                     member,
                     constant
                 ),
                 Operator.EndsWith => Expression.Call(
-                    typeof(DbFunctionsExtensions),
-                    nameof(DbFunctionsExtensions.Like),
+                    typeof(NpgsqlDbFunctionsExtensions),
+                    nameof(NpgsqlDbFunctionsExtensions.ILike),
                     Type.EmptyTypes,
                     Expression.Constant(EF.Functions),
                     member,

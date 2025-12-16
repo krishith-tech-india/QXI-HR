@@ -117,7 +117,10 @@ namespace Infrastructure.Services
 
         public async Task<QXIUserDTO?> AuthenticateUser(AuthRequestDto auth)
         {
-            var user = await _userRepo.Query(u => u.Email.Equals(auth.UsernameOrEmail) && u.Password.Equals(auth.Password), true)
+            var user = await _userRepo.Query(
+                                        u => EF.Functions.ILike(u.Email, auth.UsernameOrEmail)
+                                          && u.Password.Equals(auth.Password),
+                                        true)
                                   .Include(u => u.UserRoles)
                                   .ThenInclude(ur => ur.Role)
                                   .FirstOrDefaultAsync();

@@ -17,6 +17,7 @@ namespace Infrastructure
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IJwtTokenService, JwtTokenService>();
+            services.AddScoped<IClientService, ClientService>();
             return services;
         }
     }

@@ -26,6 +26,8 @@ namespace Data.DbContexts
 
         public virtual DbSet<JobApplication> JobApplications { get; set; }
 
+        public virtual DbSet<Client> Clients { get; set; }
+
         public override int SaveChanges()
         {
             HandleDefaultFieldChanges();
@@ -133,6 +135,11 @@ namespace Data.DbContexts
                 entity.HasKey(e => e.Id);
                 // create unique index on Email for active records
                 entity.HasIndex(e => e.Email).IsUnique(true).HasDatabaseName("UQ_EmailVerificationCodes_Email").HasFilter(isActiveFilter);
+            });
+
+            modelBuilder.Entity<Client>(entity =>
+            {
+                entity.HasKey(e => e.Id);
             });
 
             base.OnModelCreating(modelBuilder);

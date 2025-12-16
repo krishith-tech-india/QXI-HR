@@ -21,6 +21,9 @@ namespace Infrastructure
             // Media
             TypeAdapterConfig<ImageCategory, ImageCategoryDTO>.NewConfig().PreserveReference(true);
             TypeAdapterConfig<GallaryImage, GallaryImageDTO>.NewConfig().PreserveReference(true);
+
+            // Clients
+            TypeAdapterConfig<Client, ClientDTO>.NewConfig().PreserveReference(true);
         }
     }
 }

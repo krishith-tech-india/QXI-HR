@@ -1,0 +1,78 @@
+name: qxihr-stack
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: qxihr-db
+    profiles:
+      - local-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-qxihr}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeMe}
+      POSTGRES_DB: ${POSTGRES_DB:-qxihr}
+    volumes:
+      - qxihr_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-qxihr}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - qxihr_net
+
+  api:
+    image: ${REGISTRY_IMAGE_API:-qxihr-api:local}
+    build:
+      context: .
+      dockerfile: API/Dockerfile
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__PostgreSQLConnection: ${CONNECTIONSTRINGS__PostgreSQLConnection:-Host=db;Port=5432;Database=qxihr;Username=qxihr;Password=changeMe;}
+      AppSettings__APIUrl: ${APPSETTINGS__APIUrl:-http://localhost:5215}
+      AppSettings__SecurityKey: ${APPSETTINGS__SecurityKey:-replace_me}
+      AppSettings__TokenExpiryHours: ${APPSETTINGS__TokenExpiryHours:-24}
+      AppSettings__ClientList__0: ${APPSETTINGS__ClientList__0:-http://localhost:8081}
+      AppSettings__ClientList__1: ${APPSETTINGS__ClientList__1:-http://localhost:5173}
+      EmailSettings__SmtpHost: ${EMAILSETTINGS__SmtpHost:-}
+      EmailSettings__SmtpPort: ${EMAILSETTINGS__SmtpPort:-587}
+      EmailSettings__EnableSsl: ${EMAILSETTINGS__EnableSsl:-true}
+      EmailSettings__SmtpUser: ${EMAILSETTINGS__SmtpUser:-}
+      EmailSettings__SmtpPass: ${EMAILSETTINGS__SmtpPass:-}
+      EmailSettings__FromEmail: ${EMAILSETTINGS__FromEmail:-}
+      EmailSettings__FromName: ${EMAILSETTINGS__FromName:-QXI HR}
+      CloudflareR2__AccessKeyId: ${CLOUDFLARER2__AccessKeyId:-}
+      CloudflareR2__SecretAccessKey: ${CLOUDFLARER2__SecretAccessKey:-}
+      CloudflareR2__ServiceUrl: ${CLOUDFLARER2__ServiceUrl:-}
+      CloudflareR2__BucketName: ${CLOUDFLARER2__BucketName:-}
+      CloudflareR2__CustomDomain: ${CLOUDFLARER2__CustomDomain:-}
+      CloudflareR2__PreSignedUrlExpiryInMinutes: ${CLOUDFLARER2__PreSignedUrlExpiryInMinutes:-30}
+    ports:
+      - "${API_PORT_HOST:-5215}:8080"
+    networks:
+      - qxihr_net
+
+  ui:
+    image: ${REGISTRY_IMAGE_UI:-qxihr-ui:local}
+    build:
+      context: .
+      dockerfile: UI/Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:5215/}
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "${UI_PORT_HOST:-8081}:80"
+    networks:
+      - qxihr_net
+
+volumes:
+  qxihr_pgdata:
+    name: qxihr_pgdata
+
+networks:
+  qxihr_net:
+    name: qxihr_net

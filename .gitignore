@@ -362,5 +362,68 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
-# App setting.json
-API/appsettings.json
+# .gitignore for a React + Vite project
+
+# Node
+node_modules/
+
+# Vite / build output
+dist/
+build/
+.vite/
+out/
+
+# Local environment variables
+.env
+.env.local
+.env.*
+
+# Caches
+.cache/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# IDEs and editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+# Keep solution files tracked
+!*.sln
+
+# Testing and coverage
+coverage/
+*.lcov
+
+# TypeScript
+*.tsbuildinfo
+
+# Storybook
+storybook-static/
+
+# Yarn PnP
+.pnp.*
+
+# API configuration
+API/appsettings*.json
+API/appsettings.json.bak
+
+# UI frontend
+UI/node_modules/
+UI/dist/
+UI/build/
+UI/.vite/
+UI/.cache/
+UI/out/
+UI/.env
+UI/.env.*

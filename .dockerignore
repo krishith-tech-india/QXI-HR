@@ -1,0 +1,16 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+**/coverage/
+.git/
+.github/
+.vs/
+Dockerfile
+docker-compose.yml
+*.user
+*.swp
+*.swo
+*.csproj.user
+*.db
+*.DS_Store

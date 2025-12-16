@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  api:
+    ports: [] # Disable host port publishing when fronted by Traefik
+    networks:
+      - qxihr_net
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web"
+      - "traefik.http.routers.qxihr-api.rule=Host(`${TRAEFIK_API_HOST:-api.qxihr.com}`)"
+      - "traefik.http.routers.qxihr-api.entrypoints=websecure"
+      - "traefik.http.routers.qxihr-api.tls.certresolver=le"
+      - "traefik.http.services.qxihr-api.loadbalancer.server.port=8080"
+
+  ui:
+    ports: [] # Disable host port publishing when fronted by Traefik
+    networks:
+      - qxihr_net
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web"
+      - "traefik.http.routers.qxihr-ui.rule=Host(`${TRAEFIK_UI_HOST:-qxihr.com}`)"
+      - "traefik.http.routers.qxihr-ui.entrypoints=websecure"
+      - "traefik.http.routers.qxihr-ui.tls.certresolver=le"
+      - "traefik.http.services.qxihr-ui.loadbalancer.server.port=80"
+
+networks:
+  web:
+    external: true
