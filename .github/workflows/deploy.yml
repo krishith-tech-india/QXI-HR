@@ -64,8 +64,7 @@ jobs:
                   username: ${{ secrets.VPS_SSH_USER }}
                   key: ${{ secrets.VPS_SSH_KEY }}
                   script: |
-                      sudo mkdir -p /opt/qxihr
-                      sudo chown $USER:$USER /opt/qxihr
+                      mkdir -p /home/${{ secrets.VPS_SSH_USER }}/qxihr
 
             - name: Copy compose file to VPS
               uses: appleboy/scp-action@v0.1.7
@@ -74,7 +73,7 @@ jobs:
                   username: ${{ secrets.VPS_SSH_USER }}
                   key: ${{ secrets.VPS_SSH_KEY }}
                   source: "docker-compose.yml,docker-compose.traefik.yml"
-                  target: "/opt/qxihr"
+                  target: "/home/${{ secrets.VPS_SSH_USER }}/qxihr"
 
             - name: Deploy stack on VPS
               uses: appleboy/ssh-action@v0.1.10
@@ -115,8 +114,8 @@ jobs:
                   key: ${{ secrets.VPS_SSH_KEY }}
                   script: |
                       set -e
-                      mkdir -p /opt/qxihr
-                      cd /opt/qxihr
+                      mkdir -p /home/${{ secrets.VPS_SSH_USER }}/qxihr
+                      cd /home/${{ secrets.VPS_SSH_USER }}/qxihr
 
                       # Persist runtime configuration; adjust ports to avoid clashes with other projects
                       cat > .env <<EOF
