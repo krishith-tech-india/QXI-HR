@@ -24,6 +24,14 @@ const getInitialFormData = (member) => ({
   roleIds: member?.roles?.map(r => r.id) || []
 });
 
+const resolveImage = (url) => {
+  if (!url) return null;
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) {
+    return url;
+  }
+  return `https://${url}`;
+};
+
 const TeamMemberModal = ({ isOpen, onClose, onSubmit, member }) => {
   const [formData, setFormData] = useState(getInitialFormData(member));
   const [roles, setRoles] = useState([]);
@@ -195,7 +203,7 @@ const TeamMemberModal = ({ isOpen, onClose, onSubmit, member }) => {
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
           <div className="flex items-center space-x-6">
             <div className="shrink-0">
-              <img className="h-24 w-24 object-cover rounded-full" src={formData.profilePictureUrl || `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face`} alt="Profile" />
+              <img className="h-24 w-24 object-cover rounded-full" src={resolveImage(formData.profilePictureUrl) || `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face`} alt="Profile" />
             </div>
             <label className="block w-full">
               <span className="sr-only">Choose profile photo</span>
