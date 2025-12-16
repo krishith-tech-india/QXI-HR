@@ -77,43 +77,42 @@ jobs:
 
             - name: Deploy stack on VPS
               uses: appleboy/ssh-action@v0.1.10
-              env:
-                  IMAGE_API: ${{ env.IMAGE_API }}
-                  IMAGE_UI: ${{ env.IMAGE_UI }}
-                  COMPOSE_PROJECT: ${{ env.COMPOSE_PROJECT }}
-                  VITE_API_BASE_URL: ${{ env.VITE_API_BASE_URL }}
-                  API_PORT_HOST: ${{ secrets.API_PORT_HOST }}
-                  UI_PORT_HOST: ${{ secrets.UI_PORT_HOST }}
-                  POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-                  POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-                  POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-                  APPSETTINGS__APIUrl: ${{ secrets.APPSETTINGS__APIUrl }}
-                  APPSETTINGS__SecurityKey: ${{ secrets.APPSETTINGS__SecurityKey }}
-                  APPSETTINGS__TokenExpiryHours: ${{ secrets.APPSETTINGS__TokenExpiryHours }}
-                  APPSETTINGS__ClientList__0: ${{ secrets.APPSETTINGS__ClientList__0 }}
-                  APPSETTINGS__ClientList__1: ${{ secrets.APPSETTINGS__ClientList__1 }}
-                  CONNECTIONSTRINGS__PostgreSQLConnection: ${{ secrets.CONNECTIONSTRINGS__PostgreSQLConnection }}
-                  TRAEFIK_API_HOST: ${{ secrets.TRAEFIK_API_HOST }}
-                  TRAEFIK_UI_HOST: ${{ secrets.TRAEFIK_UI_HOST }}
-                  EMAILSETTINGS__SmtpHost: ${{ secrets.EMAILSETTINGS__SmtpHost }}
-                  EMAILSETTINGS__SmtpPort: ${{ secrets.EMAILSETTINGS__SmtpPort }}
-                  EMAILSETTINGS__EnableSsl: ${{ secrets.EMAILSETTINGS__EnableSsl }}
-                  EMAILSETTINGS__SmtpUser: ${{ secrets.EMAILSETTINGS__SmtpUser }}
-                  EMAILSETTINGS__SmtpPass: ${{ secrets.EMAILSETTINGS__SmtpPass }}
-                  EMAILSETTINGS__FromEmail: ${{ secrets.EMAILSETTINGS__FromEmail }}
-                  EMAILSETTINGS__FromName: ${{ secrets.EMAILSETTINGS__FromName }}
-                  CLOUDFLARER2__AccessKeyId: ${{ secrets.CLOUDFLARER2__AccessKeyId }}
-                  CLOUDFLARER2__SecretAccessKey: ${{ secrets.CLOUDFLARER2__SecretAccessKey }}
-                  CLOUDFLARER2__ServiceUrl: ${{ secrets.CLOUDFLARER2__ServiceUrl }}
-                  CLOUDFLARER2__BucketName: ${{ secrets.CLOUDFLARER2__BucketName }}
-                  CLOUDFLARER2__CustomDomain: ${{ secrets.CLOUDFLARER2__CustomDomain }}
-                  CLOUDFLARER2__PreSignedUrlExpiryInMinutes: ${{ secrets.CLOUDFLARER2__PreSignedUrlExpiryInMinutes }}
               with:
                   host: ${{ secrets.VPS_HOST }}
                   username: ${{ secrets.VPS_SSH_USER }}
                   key: ${{ secrets.VPS_SSH_KEY }}
                   script: |
                       set -e
+                      COMPOSE_PROJECT="${{ env.COMPOSE_PROJECT }}"
+                      IMAGE_API="${{ env.IMAGE_API }}"
+                      IMAGE_UI="${{ env.IMAGE_UI }}"
+                      VITE_API_BASE_URL="${{ env.VITE_API_BASE_URL }}"
+                      API_PORT_HOST="${{ secrets.API_PORT_HOST }}"
+                      UI_PORT_HOST="${{ secrets.UI_PORT_HOST }}"
+                      POSTGRES_USER="${{ secrets.POSTGRES_USER }}"
+                      POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}"
+                      POSTGRES_DB="${{ secrets.POSTGRES_DB }}"
+                      APPSETTINGS__APIUrl="${{ secrets.APPSETTINGS__APIUrl }}"
+                      APPSETTINGS__SecurityKey="${{ secrets.APPSETTINGS__SecurityKey }}"
+                      APPSETTINGS__TokenExpiryHours="${{ secrets.APPSETTINGS__TokenExpiryHours }}"
+                      APPSETTINGS__ClientList__0="${{ secrets.APPSETTINGS__ClientList__0 }}"
+                      APPSETTINGS__ClientList__1="${{ secrets.APPSETTINGS__ClientList__1 }}"
+                      CONNECTIONSTRINGS__PostgreSQLConnection="${{ secrets.CONNECTIONSTRINGS__PostgreSQLConnection }}"
+                      TRAEFIK_API_HOST="${{ secrets.TRAEFIK_API_HOST }}"
+                      TRAEFIK_UI_HOST="${{ secrets.TRAEFIK_UI_HOST }}"
+                      EMAILSETTINGS__SmtpHost="${{ secrets.EMAILSETTINGS__SmtpHost }}"
+                      EMAILSETTINGS__SmtpPort="${{ secrets.EMAILSETTINGS__SmtpPort }}"
+                      EMAILSETTINGS__EnableSsl="${{ secrets.EMAILSETTINGS__EnableSsl }}"
+                      EMAILSETTINGS__SmtpUser="${{ secrets.EMAILSETTINGS__SmtpUser }}"
+                      EMAILSETTINGS__SmtpPass="${{ secrets.EMAILSETTINGS__SmtpPass }}"
+                      EMAILSETTINGS__FromEmail="${{ secrets.EMAILSETTINGS__FromEmail }}"
+                      EMAILSETTINGS__FromName="${{ secrets.EMAILSETTINGS__FromName }}"
+                      CLOUDFLARER2__AccessKeyId="${{ secrets.CLOUDFLARER2__AccessKeyId }}"
+                      CLOUDFLARER2__SecretAccessKey="${{ secrets.CLOUDFLARER2__SecretAccessKey }}"
+                      CLOUDFLARER2__ServiceUrl="${{ secrets.CLOUDFLARER2__ServiceUrl }}"
+                      CLOUDFLARER2__BucketName="${{ secrets.CLOUDFLARER2__BucketName }}"
+                      CLOUDFLARER2__CustomDomain="${{ secrets.CLOUDFLARER2__CustomDomain }}"
+                      CLOUDFLARER2__PreSignedUrlExpiryInMinutes="${{ secrets.CLOUDFLARER2__PreSignedUrlExpiryInMinutes }}"
                       mkdir -p /home/${{ secrets.VPS_SSH_USER }}/qxihr
                       cd /home/${{ secrets.VPS_SSH_USER }}/qxihr
 
