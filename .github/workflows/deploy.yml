@@ -45,112 +45,112 @@ jobs:
                       ${{ env.IMAGE_API }}:latest
                       ${{ env.IMAGE_API }}:${{ github.sha }}
 
-                      - name: Build & push UI image
-                        uses: docker/build-push-action@v6
-                        with:
-                          context: .
-                          file: UI/Dockerfile
-                          push: true
-                          build-args: |
-                            VITE_API_BASE_URL=${{ env.VITE_API_BASE_URL }}
-                          tags: |
-                            ${{ env.IMAGE_UI }}:latest
-                            ${{ env.IMAGE_UI }}:${{ github.sha }}
+            - name: Build & push UI image
+              uses: docker/build-push-action@v6
+              with:
+                  context: .
+                  file: UI/Dockerfile
+                  push: true
+                  build-args: |
+                      VITE_API_BASE_URL=${{ env.VITE_API_BASE_URL }}
+                  tags: |
+                      ${{ env.IMAGE_UI }}:latest
+                      ${{ env.IMAGE_UI }}:${{ github.sha }}
 
-                      - name: Ensure deploy directory exists
-                        uses: appleboy/ssh-action@v0.1.10
-                        with:
-                          host: ${{ secrets.VPS_HOST }}
-                          username: ${{ secrets.VPS_SSH_USER }}
-                          key: ${{ secrets.VPS_SSH_KEY }}
-                          script: |
-                            sudo mkdir -p /opt/qxihr
-                            sudo chown $USER:$USER /opt/qxihr
+            - name: Ensure deploy directory exists
+              uses: appleboy/ssh-action@v0.1.10
+              with:
+                  host: ${{ secrets.VPS_HOST }}
+                  username: ${{ secrets.VPS_SSH_USER }}
+                  key: ${{ secrets.VPS_SSH_KEY }}
+                  script: |
+                      sudo mkdir -p /opt/qxihr
+                      sudo chown $USER:$USER /opt/qxihr
 
-                      - name: Copy compose file to VPS
-                        uses: appleboy/scp-action@v0.1.7
-                        with:
-                          host: ${{ secrets.VPS_HOST }}
-                          username: ${{ secrets.VPS_SSH_USER }}
-                                  key: ${{ secrets.VPS_SSH_KEY }}
-                                  source: "docker-compose.yml,docker-compose.traefik.yml"
-                                  target: "/opt/qxihr"
+            - name: Copy compose file to VPS
+              uses: appleboy/scp-action@v0.1.7
+              with:
+                  host: ${{ secrets.VPS_HOST }}
+                  username: ${{ secrets.VPS_SSH_USER }}
+                  key: ${{ secrets.VPS_SSH_KEY }}
+                  source: "docker-compose.yml,docker-compose.traefik.yml"
+                  target: "/opt/qxihr"
 
-                            - name: Deploy stack on VPS
-                              uses: appleboy/ssh-action@v0.1.10
-                              env:
-                                  IMAGE_API: ${{ env.IMAGE_API }}
-                                  IMAGE_UI: ${{ env.IMAGE_UI }}
-                                  COMPOSE_PROJECT: ${{ env.COMPOSE_PROJECT }}
-                                  VITE_API_BASE_URL: ${{ env.VITE_API_BASE_URL }}
-                                  API_PORT_HOST: ${{ secrets.API_PORT_HOST }}
-                                  UI_PORT_HOST: ${{ secrets.UI_PORT_HOST }}
-                                  POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-                                  POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-                                  POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-                                  APPSETTINGS__APIUrl: ${{ secrets.APPSETTINGS__APIUrl }}
-                                  APPSETTINGS__SecurityKey: ${{ secrets.APPSETTINGS__SecurityKey }}
-                                  APPSETTINGS__TokenExpiryHours: ${{ secrets.APPSETTINGS__TokenExpiryHours }}
-                                  APPSETTINGS__ClientList__0: ${{ secrets.APPSETTINGS__ClientList__0 }}
-                                  APPSETTINGS__ClientList__1: ${{ secrets.APPSETTINGS__ClientList__1 }}
-                                  CONNECTIONSTRINGS__PostgreSQLConnection: ${{ secrets.CONNECTIONSTRINGS__PostgreSQLConnection }}
-                                  TRAEFIK_API_HOST: ${{ secrets.TRAEFIK_API_HOST }}
-                                  TRAEFIK_UI_HOST: ${{ secrets.TRAEFIK_UI_HOST }}
-                                  EMAILSETTINGS__SmtpHost: ${{ secrets.EMAILSETTINGS__SmtpHost }}
-                                  EMAILSETTINGS__SmtpPort: ${{ secrets.EMAILSETTINGS__SmtpPort }}
-                                  EMAILSETTINGS__EnableSsl: ${{ secrets.EMAILSETTINGS__EnableSsl }}
-                                  EMAILSETTINGS__SmtpUser: ${{ secrets.EMAILSETTINGS__SmtpUser }}
-                                  EMAILSETTINGS__SmtpPass: ${{ secrets.EMAILSETTINGS__SmtpPass }}
-                                  EMAILSETTINGS__FromEmail: ${{ secrets.EMAILSETTINGS__FromEmail }}
-                                  EMAILSETTINGS__FromName: ${{ secrets.EMAILSETTINGS__FromName }}
-                                  CLOUDFLARER2__AccessKeyId: ${{ secrets.CLOUDFLARER2__AccessKeyId }}
-                                  CLOUDFLARER2__SecretAccessKey: ${{ secrets.CLOUDFLARER2__SecretAccessKey }}
-                                  CLOUDFLARER2__ServiceUrl: ${{ secrets.CLOUDFLARER2__ServiceUrl }}
-                                  CLOUDFLARER2__BucketName: ${{ secrets.CLOUDFLARER2__BucketName }}
-                                  CLOUDFLARER2__CustomDomain: ${{ secrets.CLOUDFLARER2__CustomDomain }}
-                                  CLOUDFLARER2__PreSignedUrlExpiryInMinutes: ${{ secrets.CLOUDFLARER2__PreSignedUrlExpiryInMinutes }}
-                              with:
-                                  host: ${{ secrets.VPS_HOST }}
-                                  username: ${{ secrets.VPS_SSH_USER }}
-                                  key: ${{ secrets.VPS_SSH_KEY }}
-                                  script: |
-                                      set -e
-                                      mkdir -p /opt/qxihr
-                                      cd /opt/qxihr
+            - name: Deploy stack on VPS
+              uses: appleboy/ssh-action@v0.1.10
+              env:
+                  IMAGE_API: ${{ env.IMAGE_API }}
+                  IMAGE_UI: ${{ env.IMAGE_UI }}
+                  COMPOSE_PROJECT: ${{ env.COMPOSE_PROJECT }}
+                  VITE_API_BASE_URL: ${{ env.VITE_API_BASE_URL }}
+                  API_PORT_HOST: ${{ secrets.API_PORT_HOST }}
+                  UI_PORT_HOST: ${{ secrets.UI_PORT_HOST }}
+                  POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+                  POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+                  POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+                  APPSETTINGS__APIUrl: ${{ secrets.APPSETTINGS__APIUrl }}
+                  APPSETTINGS__SecurityKey: ${{ secrets.APPSETTINGS__SecurityKey }}
+                  APPSETTINGS__TokenExpiryHours: ${{ secrets.APPSETTINGS__TokenExpiryHours }}
+                  APPSETTINGS__ClientList__0: ${{ secrets.APPSETTINGS__ClientList__0 }}
+                  APPSETTINGS__ClientList__1: ${{ secrets.APPSETTINGS__ClientList__1 }}
+                  CONNECTIONSTRINGS__PostgreSQLConnection: ${{ secrets.CONNECTIONSTRINGS__PostgreSQLConnection }}
+                  TRAEFIK_API_HOST: ${{ secrets.TRAEFIK_API_HOST }}
+                  TRAEFIK_UI_HOST: ${{ secrets.TRAEFIK_UI_HOST }}
+                  EMAILSETTINGS__SmtpHost: ${{ secrets.EMAILSETTINGS__SmtpHost }}
+                  EMAILSETTINGS__SmtpPort: ${{ secrets.EMAILSETTINGS__SmtpPort }}
+                  EMAILSETTINGS__EnableSsl: ${{ secrets.EMAILSETTINGS__EnableSsl }}
+                  EMAILSETTINGS__SmtpUser: ${{ secrets.EMAILSETTINGS__SmtpUser }}
+                  EMAILSETTINGS__SmtpPass: ${{ secrets.EMAILSETTINGS__SmtpPass }}
+                  EMAILSETTINGS__FromEmail: ${{ secrets.EMAILSETTINGS__FromEmail }}
+                  EMAILSETTINGS__FromName: ${{ secrets.EMAILSETTINGS__FromName }}
+                  CLOUDFLARER2__AccessKeyId: ${{ secrets.CLOUDFLARER2__AccessKeyId }}
+                  CLOUDFLARER2__SecretAccessKey: ${{ secrets.CLOUDFLARER2__SecretAccessKey }}
+                  CLOUDFLARER2__ServiceUrl: ${{ secrets.CLOUDFLARER2__ServiceUrl }}
+                  CLOUDFLARER2__BucketName: ${{ secrets.CLOUDFLARER2__BucketName }}
+                  CLOUDFLARER2__CustomDomain: ${{ secrets.CLOUDFLARER2__CustomDomain }}
+                  CLOUDFLARER2__PreSignedUrlExpiryInMinutes: ${{ secrets.CLOUDFLARER2__PreSignedUrlExpiryInMinutes }}
+              with:
+                  host: ${{ secrets.VPS_HOST }}
+                  username: ${{ secrets.VPS_SSH_USER }}
+                  key: ${{ secrets.VPS_SSH_KEY }}
+                  script: |
+                      set -e
+                      mkdir -p /opt/qxihr
+                      cd /opt/qxihr
 
-                                      # Persist runtime configuration; adjust ports to avoid clashes with other projects
-                                      cat > .env <<EOF
-                                      REGISTRY_IMAGE_API=${IMAGE_API}:latest
-                                      REGISTRY_IMAGE_UI=${IMAGE_UI}:latest
-                                      API_PORT_HOST=${API_PORT_HOST:-5215}
-                                      UI_PORT_HOST=${UI_PORT_HOST:-8081}
-                                      POSTGRES_USER=${POSTGRES_USER:-qxihr}
-                                      POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeMe}
-                                      POSTGRES_DB=${POSTGRES_DB:-qxihr}
-                                      APPSETTINGS__APIUrl=${APPSETTINGS__APIUrl:-http://localhost:5215}
-                                      APPSETTINGS__SecurityKey=${APPSETTINGS__SecurityKey:-replace_me}
-                                      APPSETTINGS__TokenExpiryHours=${APPSETTINGS__TokenExpiryHours:-24}
-                                      APPSETTINGS__ClientList__0=${APPSETTINGS__ClientList__0:-http://localhost:8081}
-                                      APPSETTINGS__ClientList__1=${APPSETTINGS__ClientList__1:-http://localhost:5173}
-                                      TRAEFIK_API_HOST=${TRAEFIK_API_HOST:-api.qxihr.com}
-                                      TRAEFIK_UI_HOST=${TRAEFIK_UI_HOST:-qxihr.com}
-                                      EMAILSETTINGS__SmtpHost=${EMAILSETTINGS__SmtpHost:-}
-                                      EMAILSETTINGS__SmtpPort=${EMAILSETTINGS__SmtpPort:-587}
-                                      EMAILSETTINGS__EnableSsl=${EMAILSETTINGS__EnableSsl:-true}
-                                      EMAILSETTINGS__SmtpUser=${EMAILSETTINGS__SmtpUser:-}
-                                      EMAILSETTINGS__SmtpPass=${EMAILSETTINGS__SmtpPass:-}
-                                      EMAILSETTINGS__FromEmail=${EMAILSETTINGS__FromEmail:-}
-                                      EMAILSETTINGS__FromName=${EMAILSETTINGS__FromName:-QXI HR}
-                                      CLOUDFLARER2__AccessKeyId=${CLOUDFLARER2__AccessKeyId:-}
-                                      CLOUDFLARER2__SecretAccessKey=${CLOUDFLARER2__SecretAccessKey:-}
-                                      CLOUDFLARER2__ServiceUrl=${CLOUDFLARER2__ServiceUrl:-}
-                                      CLOUDFLARER2__BucketName=${CLOUDFLARER2__BucketName:-}
-                                      CLOUDFLARER2__CustomDomain=${CLOUDFLARER2__CustomDomain:-}
-                                      CLOUDFLARER2__PreSignedUrlExpiryInMinutes=${CLOUDFLARER2__PreSignedUrlExpiryInMinutes:-30}
-                                      CONNECTIONSTRINGS__PostgreSQLConnection=${CONNECTIONSTRINGS__PostgreSQLConnection:-Host=db;Port=5432;Database=${POSTGRES_DB:-qxihr};Username=${POSTGRES_USER:-qxihr};Password=${POSTGRES_PASSWORD:-changeMe};}
-                                      VITE_API_BASE_URL=${VITE_API_BASE_URL}
-                                      EOF
+                      # Persist runtime configuration; adjust ports to avoid clashes with other projects
+                      cat > .env <<EOF
+                      REGISTRY_IMAGE_API=${IMAGE_API}:latest
+                      REGISTRY_IMAGE_UI=${IMAGE_UI}:latest
+                      API_PORT_HOST=${API_PORT_HOST:-5215}
+                      UI_PORT_HOST=${UI_PORT_HOST:-8081}
+                      POSTGRES_USER=${POSTGRES_USER:-qxihr}
+                      POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeMe}
+                      POSTGRES_DB=${POSTGRES_DB:-qxihr}
+                      APPSETTINGS__APIUrl=${APPSETTINGS__APIUrl:-http://localhost:5215}
+                      APPSETTINGS__SecurityKey=${APPSETTINGS__SecurityKey:-replace_me}
+                      APPSETTINGS__TokenExpiryHours=${APPSETTINGS__TokenExpiryHours:-24}
+                      APPSETTINGS__ClientList__0=${APPSETTINGS__ClientList__0:-http://localhost:8081}
+                      APPSETTINGS__ClientList__1=${APPSETTINGS__ClientList__1:-http://localhost:5173}
+                      TRAEFIK_API_HOST=${TRAEFIK_API_HOST:-api.qxihr.com}
+                      TRAEFIK_UI_HOST=${TRAEFIK_UI_HOST:-qxihr.com}
+                      EMAILSETTINGS__SmtpHost=${EMAILSETTINGS__SmtpHost:-}
+                      EMAILSETTINGS__SmtpPort=${EMAILSETTINGS__SmtpPort:-587}
+                      EMAILSETTINGS__EnableSsl=${EMAILSETTINGS__EnableSsl:-true}
+                      EMAILSETTINGS__SmtpUser=${EMAILSETTINGS__SmtpUser:-}
+                      EMAILSETTINGS__SmtpPass=${EMAILSETTINGS__SmtpPass:-}
+                      EMAILSETTINGS__FromEmail=${EMAILSETTINGS__FromEmail:-}
+                      EMAILSETTINGS__FromName=${EMAILSETTINGS__FromName:-QXI HR}
+                      CLOUDFLARER2__AccessKeyId=${CLOUDFLARER2__AccessKeyId:-}
+                      CLOUDFLARER2__SecretAccessKey=${CLOUDFLARER2__SecretAccessKey:-}
+                      CLOUDFLARER2__ServiceUrl=${CLOUDFLARER2__ServiceUrl:-}
+                      CLOUDFLARER2__BucketName=${CLOUDFLARER2__BucketName:-}
+                      CLOUDFLARER2__CustomDomain=${CLOUDFLARER2__CustomDomain:-}
+                      CLOUDFLARER2__PreSignedUrlExpiryInMinutes=${CLOUDFLARER2__PreSignedUrlExpiryInMinutes:-30}
+                      CONNECTIONSTRINGS__PostgreSQLConnection=${CONNECTIONSTRINGS__PostgreSQLConnection:-Host=db;Port=5432;Database=${POSTGRES_DB:-qxihr};Username=${POSTGRES_USER:-qxihr};Password=${POSTGRES_PASSWORD:-changeMe};}
+                      VITE_API_BASE_URL=${VITE_API_BASE_URL}
+                      EOF
 
-                                      # Compose deploy using an isolated project name to avoid touching other stacks
-                                      docker compose -p ${COMPOSE_PROJECT} -f docker-compose.yml -f docker-compose.traefik.yml pull
-                                      docker compose -p ${COMPOSE_PROJECT} -f docker-compose.yml -f docker-compose.traefik.yml up -d --remove-orphans
+                      # Compose deploy using an isolated project name to avoid touching other stacks
+                      docker compose -p ${COMPOSE_PROJECT} -f docker-compose.yml -f docker-compose.traefik.yml pull
+                      docker compose -p ${COMPOSE_PROJECT} -f docker-compose.yml -f docker-compose.traefik.yml up -d --remove-orphans
