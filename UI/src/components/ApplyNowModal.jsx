@@ -83,6 +83,9 @@ const ApplyNowModal = ({ isOpen, onClose, jobId }) => {
     const result = await handleApiCall(API_ENDPOINTS.checkApplicationExists, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }, 'You have already applied for this job.');
     if (result && result.data === false) {
       setStep(STEPS.VERIFY_EMAIL);
+    } else if (result && result.data === true) {
+      toast({ title: 'Already applied', description: 'You have already applied for this job.', variant: 'destructive' });
+      onClose?.();
     }
   };
 
