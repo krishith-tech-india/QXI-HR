@@ -81,13 +81,23 @@ const ApplyNowModal = ({ isOpen, onClose, jobId }) => {
     if (!validateStep1()) return;
     const payload = { applicantEmail: formData.applicantEmail, applicantPhoneNumber: `+91${formData.applicantPhoneNumber}`, jobPostId: parseInt(jobId, 10) };
     const result = await handleApiCall(API_ENDPOINTS.checkApplicationExists, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }, 'You have already applied for this job.');
-    if (result && result.data === false) {
+    if (!result) return;
+
+    if (result.data === false) {
       setStep(STEPS.VERIFY_EMAIL);
-    } else if (result && result.data === true) {
+      return;
+    }
+
+    // Any truthy/true response means they already applied; close the modal and notify.
+    if (result.data) {
       toast({ title: 'Already applied', description: 'You have already applied for this job.', variant: 'destructive' });
       onClose?.();
       return;
     }
+
+    // Fallback: unknown response, close to avoid leaving user stuck.
+    toast({ title: 'Notice', description: 'Unable to start application. Please try again.', variant: 'destructive' });
+    onClose?.();
   };
 
   const handleSendVerificationCode = async () => {
