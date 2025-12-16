@@ -86,6 +86,7 @@ const ApplyNowModal = ({ isOpen, onClose, jobId }) => {
     } else if (result && result.data === true) {
       toast({ title: 'Already applied', description: 'You have already applied for this job.', variant: 'destructive' });
       onClose?.();
+      return;
     }
   };
 
