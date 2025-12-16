@@ -22,7 +22,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=web"
-      - "traefik.http.routers.qxihr-ui.rule=Host(`${TRAEFIK_UI_HOST:-qxihr.com}`)"
+      - "traefik.http.routers.qxihr-ui.rule=Host(`${TRAEFIK_UI_HOST:-qxihr.com}`,`www.qxihr.com`)"
       - "traefik.http.routers.qxihr-ui.entrypoints=websecure"
       - "traefik.http.routers.qxihr-ui.tls.certresolver=le"
       - "traefik.http.services.qxihr-ui.loadbalancer.server.port=80"
