@@ -330,6 +330,14 @@ const Gallery = () => {
     }
   };
 
+  const resolveImage = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) {
+        return url;
+    }
+    return `https://${url}`;
+  };
+
   const handleDeleteItem = async (id) => {
     showLoader();
     try {
@@ -409,7 +417,7 @@ const Gallery = () => {
               {galleryItems.map((item, index) => (
                 <motion.div key={item.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: index * 0.1 }} className="bg-white rounded-xl shadow-lg overflow-hidden group">
                   <div className="relative overflow-hidden">
-                    <img src={item.imageUrl} alt={item.title} className="w-full h-64 object-cover cursor-pointer transition-transform duration-500 group-hover:scale-110" onClick={() => setSelectedImage(item)} />
+                    <img src={resolveImage(item.imageUrl)} alt={item.title} className="w-full h-64 object-cover cursor-pointer transition-transform duration-500 group-hover:scale-110" onClick={() => setSelectedImage(item)} />
                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     {(userRole === 'Admin' || userRole === 'Staff') && (
                       <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -449,7 +457,7 @@ const Gallery = () => {
         <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative max-w-4xl max-h-[90vh] w-full">
             <Button variant="ghost" size="icon" onClick={() => setSelectedImage(null)} className="absolute -top-12 right-0 text-white hover:bg-white/20"><X className="w-6 h-6" /></Button>
-            <img src={selectedImage.imageUrl} alt={selectedImage.title} className="w-full h-full object-contain rounded-lg" />
+            <img src={resolveImage(selectedImage.imageUrl)} alt={selectedImage.title} className="w-full h-full object-contain rounded-lg" />
             <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white p-4 rounded-b-lg">
               <h3 className="text-xl font-bold mb-2">{selectedImage.title}</h3>
               <p className="text-sm opacity-90" style={{ whiteSpace: 'pre-line' }}>{selectedImage.description}</p>

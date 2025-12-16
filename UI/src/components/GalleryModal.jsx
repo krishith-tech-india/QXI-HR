@@ -16,6 +16,14 @@ const GalleryModal = ({ isOpen, onClose, onSubmit, item, categories }) => {
   const [previewImage, setPreviewImage] = useState(null);
   const { toast } = useToast();
 
+  const resolveImage = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) {
+      return url;
+    }
+    return `https://${url}`;
+  };
+
   useEffect(() => {
     if (item) {
       setFormData({
@@ -24,7 +32,7 @@ const GalleryModal = ({ isOpen, onClose, onSubmit, item, categories }) => {
         description: item.description || '',
         imageFile: null,
       });
-      setPreviewImage(item.imageUrl);
+      setPreviewImage(resolveImage(item.imageUrl));
     } else {
       setFormData({
         title: '',
