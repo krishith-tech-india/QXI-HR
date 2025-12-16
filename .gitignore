@@ -416,6 +416,7 @@ storybook-static/
 
 # API configuration
 API/appsettings.json
+API/appsettings.Development.json
 API/appsettings.json.bak
 
 # Local improvement notes
