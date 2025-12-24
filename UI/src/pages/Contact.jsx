@@ -403,7 +403,7 @@ const Contact = () => {
                                     allowFullScreen=""
                                     loading="lazy"
                                     referrerPolicy="no-referrer-when-downgrade"
-                                    title="QXI HR Office Location"
+                                    title="QXI HR (OPC) PRIVATE LIMITED's Office Location"
                                 ></iframe>
                             </div>
                         </motion.div>
