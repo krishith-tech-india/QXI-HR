@@ -4,45 +4,14 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
     ArrowRight,
-    Users,
     Target,
     Eye,
     Award,
-    Search,
-    FileText,
-    UserCheck,
-    CheckSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import RecruitmentProcessSection from "@/components/RecruitmentProcessSection";
 
 const AboutUs = () => {
-    const recruitmentSteps = [
-        {
-            icon: Search,
-            title: "Requirement Analysis",
-            description:
-                "We start by understanding your specific needs, company culture, and the role's requirements in detail.",
-        },
-        {
-            icon: FileText,
-            title: "Sourcing & Screening",
-            description:
-                "Our team uses advanced sourcing techniques to find potential candidates, followed by a rigorous screening process.",
-        },
-        {
-            icon: UserCheck,
-            title: "Interview & Assessment",
-            description:
-                "Shortlisted candidates undergo comprehensive interviews and skill assessments to ensure the best fit.",
-        },
-        {
-            icon: CheckSquare,
-            title: "Final Selection & Onboarding",
-            description:
-                "We assist with the final selection, offer negotiation, and ensure a smooth onboarding process for the new hire.",
-        },
-    ];
-
     return (
         <>
             <Helmet>
@@ -90,9 +59,13 @@ const AboutUs = () => {
                             whileInView={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8 }}
                         >
-                            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-                                Our Corporate Profile
-                            </h2>
+                            <Link
+                                to="/about-us/corporate-profile"
+                                className="inline-flex items-center gap-2 text-3xl md:text-4xl font-bold text-gray-900 mb-6 hover:text-blue-700 transition-colors"
+                            >
+                                <span>Our Corporate Profile</span>
+                                <ArrowRight className="w-5 h-5" />
+                            </Link>
                             <p className="text-lg text-gray-600 mb-6 leading-relaxed">
                                 QXI HR (OPC) PRIVATE LIMITED is a premier HR
                                 consultancy firm dedicated to providing
@@ -154,95 +127,60 @@ const AboutUs = () => {
                             commitment to excellence and client success.
                         </p>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6 }}
-                            className="bg-white rounded-xl p-8 shadow-lg hover-lift"
-                        >
-                            <div className="w-16 h-16 corporate-gradient rounded-full flex items-center justify-center mb-6">
-                                <Target className="w-8 h-8 text-white" />
-                            </div>
-                            <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                                Our Mission
-                            </h3>
-                            <p className="text-gray-600 leading-relaxed">
-                                To provide exceptional HR consultancy services
-                                that empower organizations to achieve their
-                                business objectives through strategic human
-                                resource management, innovative solutions, and
-                                sustainable growth practices.
-                            </p>
-                        </motion.div>
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 0.2 }}
-                            className="bg-white rounded-xl p-8 shadow-lg hover-lift"
-                        >
-                            <div className="w-16 h-16 corporate-gradient rounded-full flex items-center justify-center mb-6">
-                                <Eye className="w-8 h-8 text-white" />
-                            </div>
-                            <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                                Our Vision
-                            </h3>
-                            <p className="text-gray-600 leading-relaxed">
-                                To be the most trusted and preferred HR
-                                consultancy firm, recognized for our commitment
-                                to excellence, innovation, and creating lasting
-                                partnerships that drive organizational success
-                                and employee satisfaction.
-                            </p>
-                        </motion.div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+                        <Link to="/about-us/mission" aria-label="Our Mission">
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.6 }}
+                                className="h-full bg-white rounded-xl p-8 shadow-lg hover-lift hover:ring-2 hover:ring-blue-100 transition-shadow flex flex-col"
+                            >
+                                <div className="w-16 h-16 corporate-gradient rounded-full flex items-center justify-center mb-6">
+                                    <Target className="w-8 h-8 text-white" />
+                                </div>
+                                <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                                    Our Mission
+                                </h3>
+                                <p className="text-gray-600 leading-relaxed">
+                                    To provide exceptional HR consultancy
+                                    services that empower organizations to
+                                    achieve their business objectives through
+                                    strategic human resource management,
+                                    innovative solutions, and sustainable
+                                    growth practices.
+                                </p>
+                            </motion.div>
+                        </Link>
+                        <Link to="/about-us/vision" aria-label="Our Vision">
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.6, delay: 0.2 }}
+                                className="h-full bg-white rounded-xl p-8 shadow-lg hover-lift hover:ring-2 hover:ring-blue-100 transition-shadow flex flex-col"
+                            >
+                                <div className="w-16 h-16 corporate-gradient rounded-full flex items-center justify-center mb-6">
+                                    <Eye className="w-8 h-8 text-white" />
+                                </div>
+                                <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                                    Our Vision
+                                </h3>
+                                <p className="text-gray-600 leading-relaxed">
+                                    To be the most trusted and preferred HR
+                                    consultancy firm, recognized for our
+                                    commitment to excellence, innovation, and
+                                    creating lasting partnerships that drive
+                                    organizational success and employee
+                                    satisfaction.
+                                </p>
+                            </motion.div>
+                        </Link>
                     </div>
                 </div>
             </section>
 
-            {/* Recruitment Process Section */}
-            <section className="section-padding">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center mb-12">
-                        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                            Our Recruitment Process
-                        </h2>
-                        <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-                            A streamlined and effective process designed to find
-                            the perfect talent for your organization.
-                        </p>
-                    </div>
-                    <div className="relative">
-                        <div className="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-gray-200 -translate-y-1/2"></div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                            {recruitmentSteps.map((step, index) => {
-                                const Icon = step.icon;
-                                return (
-                                    <motion.div
-                                        key={step.title}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        whileInView={{ opacity: 1, y: 0 }}
-                                        transition={{
-                                            duration: 0.6,
-                                            delay: index * 0.15,
-                                        }}
-                                        className="bg-white rounded-xl p-6 shadow-lg hover-lift text-center relative"
-                                    >
-                                        <div className="w-20 h-20 mx-auto mb-6 corporate-gradient rounded-full flex items-center justify-center">
-                                            <Icon className="w-10 h-10 text-white" />
-                                        </div>
-                                        <h3 className="text-xl font-bold text-gray-900 mb-3">
-                                            {step.title}
-                                        </h3>
-                                        <p className="text-gray-600 text-sm leading-relaxed">
-                                            {step.description}
-                                        </p>
-                                    </motion.div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </div>
-            </section>
+            <RecruitmentProcessSection
+                titleLink="/about-us/recruitment-process"
+            />
 
             {/* CTA Section */}
             <section className="section-padding corporate-gradient text-white">

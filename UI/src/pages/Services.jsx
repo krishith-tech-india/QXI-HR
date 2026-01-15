@@ -2,7 +2,6 @@ import React from "react";
 import { Helmet } from "react-helmet";
 import { motion } from "framer-motion";
 import {
-    DollarSign,
     Users,
     Building,
     GraduationCap,
@@ -15,19 +14,20 @@ import { Link } from "react-router-dom";
 const Services = () => {
     const services = [
         {
-            title: "HR Payroll",
-            icon: DollarSign,
+            title: "Manpower",
+            icon: Users,
             description:
-                "Comprehensive payroll management solutions designed to streamline your payroll processes and ensure compliance.",
+                "Reliable manpower solutions to help you scale teams quickly and maintain workforce continuity.",
             features: [
-                "Automated payroll processing",
-                "Tax compliance and reporting",
-                "Employee self-service portals",
-                "Benefits administration",
-                "Time and attendance tracking",
-                "Statutory compliance management",
+                "Skilled and unskilled manpower supply",
+                "On-demand workforce deployment",
+                "Compliance-ready documentation",
+                "Shift and roster management support",
+                "Industry-specific staffing",
+                "Quality and performance monitoring",
             ],
             color: "from-green-500 to-emerald-600",
+            path: "/services/manpower",
         },
         {
             title: "Placement Services",
@@ -43,6 +43,7 @@ const Services = () => {
                 "Post-placement follow-up",
             ],
             color: "from-blue-500 to-cyan-600",
+            path: "/services/placement-services",
         },
         {
             title: "Staffing Solutions",
@@ -58,6 +59,7 @@ const Services = () => {
                 "Workforce planning and analytics",
             ],
             color: "from-purple-500 to-indigo-600",
+            path: "/services/staffing-solutions",
         },
         {
             title: "Corporate Training",
@@ -73,6 +75,7 @@ const Services = () => {
                 "Performance improvement workshops",
             ],
             color: "from-orange-500 to-red-600",
+            path: "/services/corporate-training",
         },
         {
             title: "Corporate Recruitment Solutions",
@@ -88,6 +91,7 @@ const Services = () => {
                 "Recruitment analytics and reporting",
             ],
             color: "from-teal-500 to-green-600",
+            path: "/services/corporate-recruitment-solutions",
         },
     ];
 
@@ -97,7 +101,7 @@ const Services = () => {
                 <title>Our Services - QXI HR (OPC) PRIVATE LIMITED</title>
                 <meta
                     name="description"
-                    content="Explore our comprehensive HR services including payroll management, placement services, staffing solutions, corporate training, and recruitment solutions."
+                    content="Explore our comprehensive HR services including manpower solutions, placement services, staffing solutions, corporate training, and recruitment solutions."
                 />
                 <meta
                     property="og:title"
@@ -105,7 +109,7 @@ const Services = () => {
                 />
                 <meta
                     property="og:description"
-                    content="Professional HR services tailored to your business needs including payroll, recruitment, staffing, and training solutions."
+                    content="Professional HR services tailored to your business needs including manpower, recruitment, staffing, and training solutions."
                 />
             </Helmet>
 
@@ -189,7 +193,7 @@ const Services = () => {
                                             size="lg"
                                             className={`bg-gradient-to-r ${service.color} text-white hover:opacity-90`}
                                         >
-                                            <Link to="/contact">
+                                            <Link to={service.path}>
                                                 Learn More{" "}
                                                 <ArrowRight className="ml-2 w-5 h-5" />
                                             </Link>

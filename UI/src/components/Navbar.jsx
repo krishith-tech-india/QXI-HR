@@ -13,6 +13,7 @@ import {
     LogOut,
     Info,
     ClipboardList,
+    ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -20,6 +21,7 @@ const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userRole, setUserRole] = useState(null);
+    const [mobileOpenItems, setMobileOpenItems] = useState({});
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -38,10 +40,52 @@ const Navbar = () => {
         window.location.reload();
     };
 
+    const aboutUsSubItems = [
+        { name: "Mission", path: "/about-us/mission" },
+        { name: "Vision", path: "/about-us/vision" },
+        { name: "Recruitment Process", path: "/about-us/recruitment-process" },
+        {
+            name: "Corporate Profile",
+            path: "/about-us/corporate-profile",
+            children: [
+                { name: "Company Profile", path: "/about-us/company-profile" },
+                {
+                    name: "Business Proposal",
+                    path: "/about-us/business-proposal",
+                },
+            ],
+        },
+    ];
+
+    const servicesSubItems = [
+        { name: "Manpower", path: "/services/manpower" },
+        { name: "Placement Services", path: "/services/placement-services" },
+        { name: "Staffing Solutions", path: "/services/staffing-solutions" },
+        { name: "Corporate Training", path: "/services/corporate-training" },
+        {
+            name: "Corporate Recruitment Solutions",
+            path: "/services/corporate-recruitment-solutions",
+        },
+    ];
+
     const navItems = [
         { name: "Home", path: "/", icon: null, auth: "any" },
-        { name: "About Us", path: "/about-us", icon: Info, auth: "any" },
-        { name: "Services", path: "/services", icon: Briefcase, auth: "any" },
+        {
+            name: "About Us",
+            path: "/about-us",
+            icon: Info,
+            auth: "any",
+            matchPrefix: true,
+            children: aboutUsSubItems,
+        },
+        {
+            name: "Services",
+            path: "/services",
+            icon: Briefcase,
+            auth: "any",
+            matchPrefix: true,
+            children: servicesSubItems,
+        },
         {
             name: "Management Team",
             path: "/management-team",
@@ -66,7 +110,12 @@ const Navbar = () => {
         { name: "Login", path: "/login", icon: LogIn, auth: "unauthenticated" },
     ];
 
-    const isActive = (path) => location.pathname === path;
+    const isActive = (item) => {
+        if (item.matchPrefix) return location.pathname.startsWith(item.path);
+        return location.pathname === item.path;
+    };
+
+    const isChildActive = (path) => location.pathname === path;
 
     const shouldShowItem = (item) => {
         if (item.auth === "any") return true;
@@ -79,6 +128,13 @@ const Navbar = () => {
         )
             return true;
         return false;
+    };
+
+    const toggleMobileItem = (key) => {
+        setMobileOpenItems((prev) => ({
+            ...prev,
+            [key]: !prev[key],
+        }));
     };
 
     return (
@@ -100,12 +156,90 @@ const Navbar = () => {
                             if (!shouldShowItem(item)) return null;
                             const Icon = item.icon;
 
+                            if (item.children?.length) {
+                                return (
+                                    <div
+                                        key={item.name}
+                                        className="relative group"
+                                    >
+                                        <Link
+                                            to={item.path}
+                                            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-1 ${
+                                                isActive(item)
+                                                    ? "bg-blue-100 text-blue-700"
+                                                    : "text-gray-700 hover:text-blue-600 hover:bg-gray-100"
+                                            }`}
+                                        >
+                                            {Icon && (
+                                                <Icon className="w-4 h-4" />
+                                            )}
+                                            <span>{item.name}</span>
+                                            <ChevronDown className="w-4 h-4" />
+                                        </Link>
+                                        <div className="absolute left-0 mt-2 w-60 bg-white rounded-md shadow-lg border border-gray-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150">
+                                            {item.children.map((child) => (
+                                                <div
+                                                    key={child.name}
+                                                    className="relative group/child"
+                                                >
+                                                    <Link
+                                                        to={child.path}
+                                                        className={`block px-4 py-2 text-sm transition-colors duration-200 ${
+                                                            isChildActive(
+                                                                child.path
+                                                            )
+                                                                ? "bg-blue-50 text-blue-700"
+                                                                : "text-gray-700 hover:bg-gray-100 hover:text-blue-600"
+                                                        } flex items-center justify-between`}
+                                                    >
+                                                        <span>
+                                                            {child.name}
+                                                        </span>
+                                                        {child.children
+                                                            ?.length && (
+                                                            <ChevronDown className="w-4 h-4 text-gray-400 -rotate-90" />
+                                                        )}
+                                                    </Link>
+                                                    {child.children?.length && (
+                                                        <div className="absolute left-full top-0 ml-2 w-56 bg-white rounded-md shadow-lg border border-gray-100 py-2 opacity-0 invisible group-hover/child:opacity-100 group-hover/child:visible transition-all duration-150">
+                                                            {child.children.map(
+                                                                (grandchild) => (
+                                                                    <Link
+                                                                        key={
+                                                                            grandchild.name
+                                                                        }
+                                                                        to={
+                                                                            grandchild.path
+                                                                        }
+                                                                        className={`block px-4 py-2 text-sm transition-colors duration-200 ${
+                                                                            isChildActive(
+                                                                                grandchild.path
+                                                                            )
+                                                                                ? "bg-blue-50 text-blue-700"
+                                                                                : "text-gray-600 hover:bg-gray-100 hover:text-blue-600"
+                                                                        }`}
+                                                                    >
+                                                                        {
+                                                                            grandchild.name
+                                                                        }
+                                                                    </Link>
+                                                                )
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            }
+
                             return (
                                 <Link
                                     key={item.name}
                                     to={item.path}
                                     className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-1 ${
-                                        isActive(item.path)
+                                        isActive(item)
                                             ? "bg-blue-100 text-blue-700"
                                             : "text-gray-700 hover:text-blue-600 hover:bg-gray-100"
                                     }`}
@@ -157,19 +291,118 @@ const Navbar = () => {
                                 const Icon = item.icon;
 
                                 return (
-                                    <Link
-                                        key={item.name}
-                                        to={item.path}
-                                        onClick={() => setIsOpen(false)}
-                                        className={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 flex items-center space-x-2 ${
-                                            isActive(item.path)
-                                                ? "bg-blue-100 text-blue-700"
-                                                : "text-gray-700 hover:text-blue-600 hover:bg-gray-100"
-                                        }`}
-                                    >
-                                        {Icon && <Icon className="w-5 h-5" />}
-                                        <span>{item.name}</span>
-                                    </Link>
+                                    <div key={item.name}>
+                                        <Link
+                                            to={item.path}
+                                            onClick={() => setIsOpen(false)}
+                                            className={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 flex items-center space-x-2 ${
+                                                isActive(item)
+                                                    ? "bg-blue-100 text-blue-700"
+                                                    : "text-gray-700 hover:text-blue-600 hover:bg-gray-100"
+                                            }`}
+                                        >
+                                            {Icon && (
+                                                <Icon className="w-5 h-5" />
+                                            )}
+                                            <span>{item.name}</span>
+                                        </Link>
+                                        {item.children?.length && (
+                                            <div className="ml-6 mt-1 space-y-1">
+                                                {item.children.map((child) => {
+                                                    const hasChildren =
+                                                        child.children?.length;
+                                                    const childKey = `${item.name}:${child.name}`;
+                                                    return (
+                                                        <div key={child.name}>
+                                                            {hasChildren ? (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        toggleMobileItem(
+                                                                            childKey
+                                                                        )
+                                                                    }
+                                                                    className="w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 text-gray-600 hover:text-blue-600 hover:bg-gray-100"
+                                                                >
+                                                                    <span>
+                                                                        {
+                                                                            child.name
+                                                                        }
+                                                                    </span>
+                                                                    <ChevronDown
+                                                                        className={`w-4 h-4 transition-transform ${
+                                                                            mobileOpenItems[
+                                                                                childKey
+                                                                            ]
+                                                                                ? "rotate-180"
+                                                                                : ""
+                                                                        }`}
+                                                                    />
+                                                                </button>
+                                                            ) : (
+                                                                <Link
+                                                                    to={
+                                                                        child.path
+                                                                    }
+                                                                    onClick={() =>
+                                                                        setIsOpen(
+                                                                            false
+                                                                        )
+                                                                    }
+                                                                    className={`block px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                                                                        isChildActive(
+                                                                            child.path
+                                                                        )
+                                                                            ? "bg-blue-50 text-blue-700"
+                                                                            : "text-gray-600 hover:text-blue-600 hover:bg-gray-100"
+                                                                    }`}
+                                                                >
+                                                                    {child.name}
+                                                                </Link>
+                                                            )}
+                                                            {hasChildren &&
+                                                                mobileOpenItems[
+                                                                    childKey
+                                                                ] && (
+                                                                    <div className="ml-4 space-y-1">
+                                                                        {child.children.map(
+                                                                            (
+                                                                                grandchild
+                                                                            ) => (
+                                                                                <Link
+                                                                                    key={
+                                                                                        grandchild.name
+                                                                                    }
+                                                                                    to={
+                                                                                        grandchild.path
+                                                                                    }
+                                                                                    onClick={() =>
+                                                                                        setIsOpen(
+                                                                                            false
+                                                                                        )
+                                                                                    }
+                                                                                    className={`block px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                                                                                        isChildActive(
+                                                                                            grandchild.path
+                                                                                        )
+                                                                                            ? "bg-blue-50 text-blue-700"
+                                                                                            : "text-gray-500 hover:text-blue-600 hover:bg-gray-100"
+                                                                                    }`}
+                                                                                >
+                                                                                    {
+                                                                                        grandchild.name
+                                                                                    }
+                                                                                </Link>
+                                                                            )
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
                                 );
                             })}
                             {isAuthenticated && (

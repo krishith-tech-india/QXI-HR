@@ -42,7 +42,7 @@ const Footer = () => {
                     <div className="space-y-4">
                         <div className="flex items-center space-x-2">
                             <img
-                                src="https://qxi-applicant-docs.qxihr.com/9e28b840-49ef-4f18-b91c-bbe506bba1f5_qxi.png"
+                                src="https://qxi-applicant-docs.qxihr.com/e68b3f3d-80a0-4fd5-943d-f7c855b578cd_qxi_1.png"
                                 alt="QXI HR (OPC) PRIVATE LIMITED Logo"
                                 className="h-10 w-auto"
                             />
