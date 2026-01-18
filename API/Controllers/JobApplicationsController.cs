@@ -1,5 +1,7 @@
+using System.Linq;
 using Core.DTOs;
 using Infrastructure.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
@@ -9,10 +11,12 @@ namespace API.Controllers
     public class JobApplicationsController : ControllerBase
     {
         private readonly IJobApplicationService _service;
+        private readonly IUserService _userService;
 
-        public JobApplicationsController(IJobApplicationService service)
+        public JobApplicationsController(IJobApplicationService service, IUserService userService)
         {
             _service = service;
+            _userService = userService;
         }
 
         [HttpGet]
@@ -76,12 +80,56 @@ namespace API.Controllers
             return StatusCode(StatusCodes.Status200OK, Response<IEnumerable<JobApplicationDTO>>.Success(list, StatusCodes.Status200OK));
         }
 
+        [HttpGet]
+        [Authorize(Roles = "Applicant")]
+        public async Task<IActionResult> GetMyApplications()
+        {
+            var email = HttpContext?.User?.Identity?.Name;
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return StatusCode(StatusCodes.Status401Unauthorized, Response<IEnumerable<JobApplicationDTO>>.Failure(new Error("Unauthorized", "Invalid user."), StatusCodes.Status401Unauthorized));
+            }
+
+            var user = await _userService.GetByEmailAsync(email);
+            if (user == null)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, Response<IEnumerable<JobApplicationDTO>>.Failure(new Error("BadRequest", "Applicant not found."), StatusCodes.Status400BadRequest));
+            }
+
+            var list = await _service.GetByApplicantUserIdAsync(user.Id);
+            return StatusCode(StatusCodes.Status200OK, Response<IEnumerable<JobApplicationDTO>>.Success(list, StatusCodes.Status200OK));
+        }
+
         [HttpPost]
+        [Authorize(Roles = "Applicant")]
         public async Task<IActionResult> Create(JobApplicationDTO dto)
         {
             if (dto == null)
             {
                 return StatusCode(StatusCodes.Status400BadRequest, Response<JobApplicationDTO>.Failure(new Error("BadRequest", "Payload is null."), StatusCodes.Status400BadRequest));
+            }
+
+            var email = HttpContext?.User?.Identity?.Name;
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return StatusCode(StatusCodes.Status401Unauthorized, Response<JobApplicationDTO>.Failure(new Error("Unauthorized", "Invalid user."), StatusCodes.Status401Unauthorized));
+            }
+
+            var user = await _userService.GetByEmailAsync(email);
+            if (user == null)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, Response<JobApplicationDTO>.Failure(new Error("BadRequest", "Applicant not found."), StatusCodes.Status400BadRequest));
+            }
+
+            dto.ApplicantUserId = user.Id;
+            dto.ApplicantEmail = user.Email;
+            dto.ApplicantPhoneNumber = user.PhoneNumber;
+            dto.ApplicantName = string.Join(" ", new[] { user.FirstName, user.LastName }.Where(value => !string.IsNullOrWhiteSpace(value)));
+
+            var alreadyApplied = await _service.CheckApplicationExist(dto);
+            if (alreadyApplied)
+            {
+                return StatusCode(StatusCodes.Status409Conflict, Response<JobApplicationDTO>.Failure(new Error("Conflict", "You have already applied for this job."), StatusCodes.Status409Conflict));
             }
 
             var created = await _service.CreateAsync(dto);
@@ -123,6 +171,7 @@ namespace API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Applicant")]
         public async Task<IActionResult> GetUploadUrl(string filename)
         {
             if (string.IsNullOrWhiteSpace(filename))
@@ -136,8 +185,22 @@ namespace API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Applicant")]
         public async Task<IActionResult> CheckApplicationExist(JobApplicationDTO dto)
         {
+            var email = HttpContext?.User?.Identity?.Name;
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return StatusCode(StatusCodes.Status401Unauthorized, Response<bool>.Failure(new Error("Unauthorized", "Invalid user."), StatusCodes.Status401Unauthorized));
+            }
+
+            var user = await _userService.GetByEmailAsync(email);
+            if (user == null)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, Response<bool>.Failure(new Error("BadRequest", "Applicant not found."), StatusCodes.Status400BadRequest));
+            }
+
+            dto.ApplicantUserId = user.Id;
             return StatusCode(StatusCodes.Status200OK, Response<bool>.Success(await _service.CheckApplicationExist(dto), StatusCodes.Status200OK));
         }
 

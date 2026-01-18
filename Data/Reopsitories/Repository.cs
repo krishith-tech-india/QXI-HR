@@ -165,7 +165,7 @@ namespace Data.Reopsitories
         #region SynchronousMethods
 
         /// <inheritdoc />
-        public virtual TEntity GetById(object Id)
+        public virtual TEntity? GetById(object Id)
         {
             return dbSet.Find(Id);
         }

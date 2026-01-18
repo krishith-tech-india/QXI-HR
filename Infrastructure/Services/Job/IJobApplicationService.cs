@@ -4,6 +4,7 @@ namespace Infrastructure.Services
     public interface IJobApplicationService : IEntityCrudService<JobApplicationDTO>
     {
         Task<IEnumerable<JobApplicationDTO>> GetByJobPostIdAsync(int jobPostId);
+        Task<IEnumerable<JobApplicationDTO>> GetByApplicantUserIdAsync(int userId);
 
         Task<ResumePresignedUrlDto> GetUploadUrl(string filename);
 

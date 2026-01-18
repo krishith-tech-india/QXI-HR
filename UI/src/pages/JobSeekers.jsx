@@ -24,6 +24,7 @@ const JobSeekers = () => {
     const [jobs, setJobs] = useState([]);
     const [totalJobs, setTotalJobs] = useState(0);
     const [userRole, setUserRole] = useState(null);
+    const [skills, setSkills] = useState([]);
     const { toast } = useToast();
     const { showLoader, hideLoader } = useLoader();
 
@@ -35,7 +36,7 @@ const JobSeekers = () => {
         title: "",
         companyName: "",
         location: "",
-        skils: "",
+        skillId: "",
     });
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -106,6 +107,25 @@ const JobSeekers = () => {
     useEffect(() => {
         const role = sessionStorage.getItem("role");
         setUserRole(role);
+    }, []);
+
+    useEffect(() => {
+        const fetchSkills = async () => {
+            try {
+                const response = await fetch(API_ENDPOINTS.getSkills, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ page: 1, pageSize: 99, sortBy: "name" }),
+                });
+                const result = await response.json();
+                if (result.isSuccess) {
+                    setSkills(result.data || []);
+                }
+            } catch (error) {
+                setSkills([]);
+            }
+        };
+        fetchSkills();
     }, []);
 
     useEffect(() => {
@@ -267,6 +287,7 @@ const JobSeekers = () => {
                 }}
                 onEdit={handleOpenModal}
                 onDelete={handleDelete}
+                skills={skills}
             />
 
             <JobModal

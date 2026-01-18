@@ -27,6 +27,9 @@ import JobSeekers from '@/pages/JobSeekers';
 import JobDetail from '@/pages/JobDetail';
 import JobApplications from '@/pages/JobApplications';
 import Login from '@/pages/Login';
+import ApplicantSignup from '@/pages/ApplicantSignup';
+import Profile from '@/pages/Profile';
+import MyApplications from '@/pages/MyApplications';
 import Contact from '@/pages/Contact';
 
 function App() {
@@ -83,6 +86,10 @@ function App() {
               <Route path="/job-seekers/:jobID" element={<JobDetail />} />
               <Route path="/job-applications" element={<JobApplications />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<ApplicantSignup />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/profile/:userId" element={<Profile />} />
+              <Route path="/profile/applications" element={<MyApplications />} />
               <Route path="/contact" element={<Contact />} />
             </Routes>
           </main>

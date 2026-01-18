@@ -14,6 +14,7 @@ import {
 
 const JobCard = ({ job, index, userRole, onEdit, onDelete }) => {
   const canManage = userRole === 'Admin' || userRole === 'Staff';
+  const skillList = job.skills?.length ? job.skills.map((skill) => skill.name).join(', ') : job.skils;
   
   const handleAction = (e, action) => {
     e.preventDefault();
@@ -46,7 +47,7 @@ const JobCard = ({ job, index, userRole, onEdit, onDelete }) => {
           {job.location && <div className="flex items-center"><MapPin className="w-4 h-4 mr-2 text-blue-500" /> {job.location}</div>}
           {job.salary && <div className="flex items-center"><Wallet className="w-4 h-4 mr-2 text-green-500" /> {job.salary}</div>}
           {job.experience && <div className="flex items-center"><Briefcase className="w-4 h-4 mr-2 text-indigo-500" /> {job.experience}</div>}
-          {job.skils && <div className="flex items-start"><Code className="w-4 h-4 mr-2 mt-0.5 text-purple-500" /> <div><span className="font-semibold">Skills:</span> {job.skils}</div></div>}
+          {skillList && <div className="flex items-start"><Code className="w-4 h-4 mr-2 mt-0.5 text-purple-500" /> <div><span className="font-semibold">Skills:</span> {skillList}</div></div>}
         </div>
 
         <div className="flex justify-end items-center pt-4 border-t">
@@ -60,7 +61,7 @@ const JobCard = ({ job, index, userRole, onEdit, onDelete }) => {
   );
 }
 
-const FilterControls = ({ filters, sorting }) => {
+const FilterControls = ({ filters, sorting, skills }) => {
   return (
     <div className="bg-gray-50 p-6 rounded-xl mb-12 border">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
@@ -82,7 +83,17 @@ const FilterControls = ({ filters, sorting }) => {
         </div>
         <div className="relative">
           <Code className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-          <Input placeholder="Filter by Skills..." value={filters.skils} onChange={(e) => filters.onFilterChange({ skils: e.target.value })} className="pl-10"/>
+          <Select value={filters.skillId || "all"} onValueChange={(value) => filters.onFilterChange({ skillId: value === "all" ? "" : value })}>
+            <SelectTrigger className="pl-10">
+              <SelectValue placeholder="Filter by Skill..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Skills</SelectItem>
+              {skills.map((skill) => (
+                <SelectItem key={skill.id} value={String(skill.id)}>{skill.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -105,7 +116,7 @@ const FilterControls = ({ filters, sorting }) => {
         </div>
         <Button variant="ghost" onClick={() => {
             filters.onSearchChange('');
-            filters.onFilterChange({ title: '', companyName: '', location: '', skils: '' });
+            filters.onFilterChange({ title: '', companyName: '', location: '', skillId: '' });
         }}><X className="w-4 h-4 mr-2"/>Clear Filters</Button>
       </div>
     </div>
@@ -127,7 +138,7 @@ const PaginationControls = ({ pagination }) => {
   );
 }
 
-const JobListings = ({ jobs, userRole, pagination, filters, sorting, onEdit, onDelete }) => {
+const JobListings = ({ jobs, userRole, pagination, filters, sorting, onEdit, onDelete, skills = [] }) => {
   return (
     <section className="section-padding-bottom bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -135,7 +146,7 @@ const JobListings = ({ jobs, userRole, pagination, filters, sorting, onEdit, onD
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Current Job Openings</h2>
           <p className="text-lg text-gray-600">Explore exciting career opportunities</p>
         </div>
-        <FilterControls filters={filters} sorting={sorting} />
+        <FilterControls filters={filters} sorting={sorting} skills={skills} />
         {jobs.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-xl border">
             <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center"><Search className="w-12 h-12 text-gray-400" /></div>

@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { API_ENDPOINTS } from '@/config/apiConfig';
+import SkillMultiSelect from '@/components/SkillMultiSelect';
 
 const JobModal = ({ isOpen, onClose, onSubmit, job }) => {
   const [formData, setFormData] = useState({
@@ -14,12 +16,18 @@ const JobModal = ({ isOpen, onClose, onSubmit, job }) => {
     location: '',
     skils: '',
     salary: '',
-    experience: ''
+    experience: '',
+    skillIds: []
   });
+  const [skills, setSkills] = useState([]);
+  const [isLoadingSkills, setIsLoadingSkills] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     if (job) {
+      const jobSkillIds = job.skillIds?.length
+        ? job.skillIds
+        : (job.skills || []).map((skill) => skill.id);
       setFormData({
         title: job.title || '',
         description: job.description || '',
@@ -27,7 +35,8 @@ const JobModal = ({ isOpen, onClose, onSubmit, job }) => {
         location: job.location || '',
         skils: job.skils || '',
         salary: job.salary || '',
-        experience: job.experience || ''
+        experience: job.experience || '',
+        skillIds: jobSkillIds || []
       });
     } else {
       setFormData({
@@ -37,14 +46,67 @@ const JobModal = ({ isOpen, onClose, onSubmit, job }) => {
         location: '',
         skils: '',
         salary: '',
-        experience: ''
+        experience: '',
+        skillIds: []
       });
     }
   }, [job, isOpen]);
 
+  const fetchSkills = useCallback(async () => {
+    if (!isOpen) return;
+    setIsLoadingSkills(true);
+    try {
+      const response = await fetch(API_ENDPOINTS.getSkills, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page: 1, pageSize: 500, sortBy: 'name' })
+      });
+      const result = await response.json();
+      if (result.isSuccess) {
+        setSkills(result.data || []);
+      } else {
+        toast({ title: 'Error', description: 'Failed to load skills.', variant: 'destructive' });
+      }
+    } catch (error) {
+      toast({ title: 'Network Error', description: 'Could not load skills.', variant: 'destructive' });
+    } finally {
+      setIsLoadingSkills(false);
+    }
+  }, [isOpen, toast]);
+
+  useEffect(() => {
+    fetchSkills();
+  }, [fetchSkills]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSkillChange = (skillIds) => {
+    setFormData(prev => ({ ...prev, skillIds }));
+  };
+
+  const handleCreateSkill = async (name) => {
+    try {
+      const response = await fetch(API_ENDPOINTS.createSkill, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      });
+      const result = await response.json();
+      if (result.isSuccess) {
+        const created = result.data;
+        setSkills((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+        setFormData((prev) => ({ ...prev, skillIds: [...prev.skillIds, created.id] }));
+        return true;
+      }
+      toast({ title: 'Error', description: 'Failed to add skill.', variant: 'destructive' });
+      return false;
+    } catch (error) {
+      toast({ title: 'Network Error', description: 'Could not add skill.', variant: 'destructive' });
+      return false;
+    }
   };
 
   const handleSubmit = (e) => {
@@ -77,8 +139,15 @@ const JobModal = ({ isOpen, onClose, onSubmit, job }) => {
             <InputField label="Location" name="location" value={formData.location} onChange={handleChange} />
             <InputField label="Salary" name="salary" value={formData.salary} onChange={handleChange} />
             <InputField label="Experience" name="experience" value={formData.experience} onChange={handleChange} />
-            <InputField label="Skills" name="skils" value={formData.skils} onChange={handleChange} />
           </div>
+          <SkillMultiSelect
+            label="Skills"
+            skills={skills}
+            selectedIds={formData.skillIds}
+            onChange={handleSkillChange}
+            onCreateSkill={handleCreateSkill}
+            isLoading={isLoadingSkills}
+          />
           <div>
             <Label htmlFor="description" className="font-medium text-gray-700">Description *</Label>
             <textarea id="description" name="description" value={formData.description} onChange={handleChange} rows={5} className="mt-1 w-full flex min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm" required />

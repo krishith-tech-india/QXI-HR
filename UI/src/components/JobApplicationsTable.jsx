@@ -75,7 +75,6 @@ const JobApplicationsTable = ({ applications, title }) => {
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone Number</th>
                 <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Resume</th>
-                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Cover Letter</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -86,11 +85,6 @@ const JobApplicationsTable = ({ applications, title }) => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{app.applicantPhoneNumber}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                     <Button variant="outline" size="icon" onClick={() => openPreview(app.resumeUrl, `Resume - ${app.applicantName}`)} disabled={!app.resumeUrl}>
-                      <FileText className="w-4 h-4" />
-                    </Button>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                    <Button variant="outline" size="icon" onClick={() => openPreview(app.coverLetterUrl, `Cover Letter - ${app.applicantName}`)} disabled={!app.coverLetterUrl}>
                       <FileText className="w-4 h-4" />
                     </Button>
                   </td>

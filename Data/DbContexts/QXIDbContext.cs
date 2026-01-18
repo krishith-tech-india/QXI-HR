@@ -27,6 +27,16 @@ namespace Data.DbContexts
         public virtual DbSet<JobApplication> JobApplications { get; set; }
 
         public virtual DbSet<Client> Clients { get; set; }
+        public virtual DbSet<Skill> Skills { get; set; }
+        public virtual DbSet<JobPostSkill> JobPostSkills { get; set; }
+        public virtual DbSet<ApplicantSkill> ApplicantSkills { get; set; }
+        public virtual DbSet<ApplicantProfile> ApplicantProfiles { get; set; }
+        public virtual DbSet<ApplicantEmployment> ApplicantEmployments { get; set; }
+        public virtual DbSet<ApplicantEducation> ApplicantEducations { get; set; }
+        public virtual DbSet<ApplicantProject> ApplicantProjects { get; set; }
+        public virtual DbSet<ApplicantOnlineProfile> ApplicantOnlineProfiles { get; set; }
+        public virtual DbSet<ApplicantCertification> ApplicantCertifications { get; set; }
+        public virtual DbSet<ApplicantLanguage> ApplicantLanguages { get; set; }
 
         public override int SaveChanges()
         {
@@ -72,6 +82,10 @@ namespace Data.DbContexts
                 entity.HasMany(x => x.UserRoles)
                       .WithOne(ur => ur.User)
                       .HasForeignKey(ur => ur.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                entity.HasMany(x => x.ApplicantSkills)
+                      .WithOne(ua => ua.User)
+                      .HasForeignKey(ua => ua.UserId)
                       .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasIndex(e => e.Email).IsUnique(true).HasDatabaseName("UQ_Users_Email").HasFilter(isActiveFilter);
@@ -128,6 +142,19 @@ namespace Data.DbContexts
                     .WithOne(ja => ja.JobPost)
                     .HasForeignKey(ja => ja.JobPostId)
                     .OnDelete(DeleteBehavior.Cascade);
+                entity.HasMany(jp => jp.JobPostSkills)
+                    .WithOne(jps => jps.JobPost)
+                    .HasForeignKey(jps => jps.JobPostId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<JobApplication>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasOne(e => e.ApplicantUser)
+                      .WithMany(u => u.JobApplications)
+                      .HasForeignKey(e => e.ApplicantUserId)
+                      .OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<EmailVerificationCode>(entity =>
@@ -140,6 +167,101 @@ namespace Data.DbContexts
             modelBuilder.Entity<Client>(entity =>
             {
                 entity.HasKey(e => e.Id);
+            });
+
+            modelBuilder.Entity<Skill>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.Name).IsUnique(true).HasDatabaseName("UQ_Skills_Name").HasFilter(isActiveFilter);
+            });
+
+            modelBuilder.Entity<JobPostSkill>(entity =>
+            {
+                entity.HasKey(e => new { e.JobPostId, e.SkillId });
+                entity.HasOne(e => e.JobPost)
+                      .WithMany(j => j.JobPostSkills)
+                      .HasForeignKey(e => e.JobPostId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(e => e.Skill)
+                      .WithMany(s => s.JobPostSkills)
+                      .HasForeignKey(e => e.SkillId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<ApplicantSkill>(entity =>
+            {
+                entity.HasKey(e => new { e.UserId, e.SkillId });
+                entity.HasOne(e => e.User)
+                      .WithMany(u => u.ApplicantSkills)
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(e => e.Skill)
+                      .WithMany(s => s.ApplicantSkills)
+                      .HasForeignKey(e => e.SkillId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<ApplicantProfile>(entity =>
+            {
+                entity.HasKey(e => e.UserId);
+                entity.HasOne(e => e.User)
+                      .WithOne(u => u.ApplicantProfile)
+                      .HasForeignKey<ApplicantProfile>(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<ApplicantEmployment>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasOne(e => e.Profile)
+                      .WithMany(p => p.Employments)
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<ApplicantEducation>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasOne(e => e.Profile)
+                      .WithMany(p => p.Educations)
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<ApplicantProject>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasOne(e => e.Profile)
+                      .WithMany(p => p.Projects)
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<ApplicantOnlineProfile>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasOne(e => e.Profile)
+                      .WithMany(p => p.OnlineProfiles)
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<ApplicantCertification>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasOne(e => e.Profile)
+                      .WithMany(p => p.Certifications)
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<ApplicantLanguage>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasOne(e => e.Profile)
+                      .WithMany(p => p.Languages)
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
             base.OnModelCreating(modelBuilder);

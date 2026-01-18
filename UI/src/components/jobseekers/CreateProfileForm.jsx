@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import { API_ENDPOINTS } from '@/config/apiConfig';
+import SkillMultiSelect from '@/components/SkillMultiSelect';
 
 const CreateProfileForm = () => {
   const [profileData, setProfileData] = useState({
@@ -12,10 +14,34 @@ const CreateProfileForm = () => {
     location: '',
     experience: '',
     education: '',
-    skills: '',
+    skillIds: [],
     summary: ''
   });
   const { toast } = useToast();
+  const [skills, setSkills] = useState([]);
+  const [isLoadingSkills, setIsLoadingSkills] = useState(false);
+
+  useEffect(() => {
+    const fetchSkills = async () => {
+      setIsLoadingSkills(true);
+      try {
+        const response = await fetch(API_ENDPOINTS.getSkills, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ page: 1, pageSize: 99, sortBy: 'name' })
+        });
+        const result = await response.json();
+        if (result.isSuccess) {
+          setSkills(result.data || []);
+        }
+      } catch (error) {
+        setSkills([]);
+      } finally {
+        setIsLoadingSkills(false);
+      }
+    };
+    fetchSkills();
+  }, []);
 
   const handleProfileSubmit = (e) => {
     e.preventDefault();
@@ -29,9 +55,13 @@ const CreateProfileForm = () => {
       return;
     }
 
+    const selectedSkillNames = skills
+      .filter((skill) => profileData.skillIds.includes(skill.id))
+      .map((skill) => skill.name);
     const profiles = JSON.parse(localStorage.getItem('candidateProfiles') || '[]');
     const newProfile = {
       ...profileData,
+      skills: selectedSkillNames.join(', '),
       id: Date.now(),
       createdAt: new Date().toISOString()
     };
@@ -51,7 +81,7 @@ const CreateProfileForm = () => {
       location: '',
       experience: '',
       education: '',
-      skills: '',
+      skillIds: [],
       summary: ''
     });
   };
@@ -174,18 +204,13 @@ const CreateProfileForm = () => {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Skills
-              </label>
-              <textarea
-                value={profileData.skills}
-                onChange={(e) => setProfileData({ ...profileData, skills: e.target.value })}
-                rows={3}
-                className="custom-input"
-                placeholder="List your key skills and competencies..."
-              />
-            </div>
+            <SkillMultiSelect
+              label="Skills"
+              skills={skills}
+              selectedIds={profileData.skillIds}
+              onChange={(skillIds) => setProfileData((prev) => ({ ...prev, skillIds }))}
+              isLoading={isLoadingSkills}
+            />
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">

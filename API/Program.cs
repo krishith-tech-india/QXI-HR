@@ -29,7 +29,7 @@ builder.Services.AddCoreDependencies(builder.Configuration, MyAllowSpecificOrigi
 builder.Services.AddControllers().AddNewtonsoftJson(opt =>
 {
     opt.SerializerSettings.Culture = CultureInfo.InvariantCulture;
-    opt.SerializerSettings.DateFormatString = "dddd, dd, MMMM, yyyy hh:mm:ss tt K";
+    opt.SerializerSettings.DateFormatString = "dd/MM/yyyy";
     opt.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
     opt.SerializerSettings.DateTimeZoneHandling = DateTimeZoneHandling.Utc;
     opt.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;

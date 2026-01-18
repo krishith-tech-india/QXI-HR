@@ -41,22 +41,28 @@ namespace API.Filters
 
                 var authHeader = context.HttpContext?.Request?.Headers.Authorization.ToString();
 
-                if (string.IsNullOrEmpty(authHeader))
+                if (string.IsNullOrWhiteSpace(authHeader) || string.IsNullOrWhiteSpace(_appSettings.SecurityKey))
                 {
                     context.Result = unauthorizedResult;
+                    return;
                 }
 
-                var token = await authHeader?.Replace("Bearer ", string.Empty, StringComparison.OrdinalIgnoreCase)
-                                                              .ValidateToken(_appSettings.ClientList, _appSettings.APIUrl, _appSettings.SecurityKey)!;
-
-                if (token == null || !token.IsValid)
+                if (context.HttpContext == null)
                 {
                     context.Result = unauthorizedResult;
+                    return;
                 }
-                else
+
+                var token = await authHeader.Replace("Bearer ", string.Empty, StringComparison.OrdinalIgnoreCase)
+                                                              .ValidateToken(_appSettings.ClientList, _appSettings.APIUrl, _appSettings.SecurityKey);
+
+                if (token == null || !token.IsValid || token.ClaimsIdentity == null)
                 {
-                    context.HttpContext.User = new System.Security.Claims.ClaimsPrincipal(token?.ClaimsIdentity);
+                    context.Result = unauthorizedResult;
+                    return;
                 }
+                
+                context.HttpContext.User = new System.Security.Claims.ClaimsPrincipal(token.ClaimsIdentity);
 
 
             }

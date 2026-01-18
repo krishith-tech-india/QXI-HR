@@ -35,7 +35,7 @@ namespace Data.Reopsitories
         /// </summary>
         /// <param name="Id">The id.</param>
         /// <returns>A TEntity.</returns>
-        TEntity GetById(object Id);
+        TEntity? GetById(object Id);
 
         /// <summary>
         /// Gets the by id async.

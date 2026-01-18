@@ -16,6 +16,7 @@ namespace Infrastructure.Services
     {
         private readonly IRepository<JobApplication> _jobApplicationRepo;
         private readonly IRepository<JobPost> _jobPostRepo;
+        private readonly IRepository<ApplicantProfile> _applicantProfileRepo;
         private readonly IAmazonS3 _s3Client;
         private readonly R2Settings _r2Settings;
     private readonly IRepository<EmailVerificationCode> _emailVerificationRepo;
@@ -26,6 +27,7 @@ namespace Infrastructure.Services
                 IAmazonS3 s3Client,
                 R2Settings r2Settings,
                 IRepository<JobPost> jobPostRepo,
+                IRepository<ApplicantProfile> applicantProfileRepo,
                 IRepository<EmailVerificationCode> emailVerificationRepo,
                 Core.DTOs.EmailSettings emailSettings,
                 Microsoft.Extensions.Logging.ILogger<JobApplicationService> logger
@@ -35,15 +37,24 @@ namespace Infrastructure.Services
              _s3Client = s3Client;
             _r2Settings = r2Settings;
             _jobPostRepo = jobPostRepo;
+            _applicantProfileRepo = applicantProfileRepo;
             _emailVerificationRepo = emailVerificationRepo;
             _emailSettings = emailSettings;
             _logger = logger;
         } 
 
         public async Task<JobApplicationDTO> CreateAsync(JobApplicationDTO dto)
-        {        
+        {
+            if (string.IsNullOrWhiteSpace(dto.ResumeUrl) && dto.ApplicantUserId.HasValue)
+            {
+                dto.ResumeUrl = await _applicantProfileRepo
+                    .Query(p => p.UserId == dto.ApplicantUserId.Value, true)
+                    .Select(p => p.ResumeUrl)
+                    .FirstOrDefaultAsync();
+            }
+
             var entity = dto.Adapt<JobApplication>();
-            entity.JobPost = null;
+            entity.JobPost = null!;
             _jobApplicationRepo.Insert(entity);
             await _jobApplicationRepo.SaveChangesAsync();
             return entity.Adapt<JobApplicationDTO>();
@@ -64,9 +75,10 @@ namespace Infrastructure.Services
             Expression<Func<JobApplication, bool>> filter = PredicateBuilder.BuildFilterExpression<JobApplication>(requestParams.Filters);
             if(!string.IsNullOrWhiteSpace(requestParams.SearchKeyword))
             {
-                requestParams.SearchKeyword = requestParams.SearchKeyword.Trim().ToLikeFilterString(Operator.Contains);
-                Expression<Func<JobApplication, bool>> searchExpr = ja => EF.Functions.ILike(ja.ApplicantName, requestParams.SearchKeyword) 
-                || EF.Functions.ILike(ja.ApplicantEmail, requestParams.SearchKeyword);
+                var searchKeyword = requestParams.SearchKeyword.Trim().ToLikeFilterString(Operator.Contains);
+                requestParams.SearchKeyword = searchKeyword;
+                Expression<Func<JobApplication, bool>> searchExpr = ja => EF.Functions.ILike(ja.ApplicantName ?? string.Empty, searchKeyword) 
+                || EF.Functions.ILike(ja.ApplicantEmail ?? string.Empty, searchKeyword);
 
                 filter = filter == null ? searchExpr : PredicateBuilder.And(filter, searchExpr);
             }
@@ -106,6 +118,30 @@ namespace Infrastructure.Services
             return list.Adapt<IEnumerable<JobApplicationDTO>>();
         }
 
+        public async Task<IEnumerable<JobApplicationDTO>> GetByApplicantUserIdAsync(int userId)
+        {
+            var list = await _jobApplicationRepo
+                .Query(a => a.ApplicantUserId == userId, true)
+                .Include(a => a.JobPost)
+                .OrderByDescending(a => a.Id)
+                .ToListAsync();
+
+            return list.Select(a => new JobApplicationDTO
+            {
+                Id = a.Id,
+                ApplicantName = a.ApplicantName,
+                ApplicantEmail = a.ApplicantEmail,
+                ApplicantPhoneNumber = a.ApplicantPhoneNumber,
+                ResumeUrl = a.ResumeUrl,
+                CoverLetterUrl = a.CoverLetterUrl,
+                JobPostId = a.JobPostId,
+                ApplicantUserId = a.ApplicantUserId,
+                JobPostTitle = a.JobPost?.Title,
+                JobPostCompanyName = a.JobPost?.CompanyName,
+                JobPostLocation = a.JobPost?.Location
+            });
+        }
+
         public async Task<ResumePresignedUrlDto> GetUploadUrl(string filename)
         {
             if (string.IsNullOrEmpty(filename))
@@ -132,6 +168,13 @@ namespace Infrastructure.Services
 
         public async Task<bool> CheckApplicationExist(JobApplicationDTO dto)
         {
+            if (dto.ApplicantUserId.HasValue)
+            {
+                return await _jobApplicationRepo
+                    .Query(x => x.JobPostId == dto.JobPostId && x.ApplicantUserId == dto.ApplicantUserId)
+                    .AnyAsync();
+            }
+
             return await _jobApplicationRepo
                         .Query(x => x.JobPostId == dto.JobPostId && (x.ApplicantEmail == dto.ApplicantEmail || x.ApplicantPhoneNumber == dto.ApplicantPhoneNumber))
                         .AnyAsync();

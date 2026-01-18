@@ -9,5 +9,9 @@ namespace Core.DTOs
         public string? ResumeUrl { get; set; }
         public string? CoverLetterUrl { get; set; }
         public int JobPostId { get; set; }
+        public int? ApplicantUserId { get; set; }
+        public string? JobPostTitle { get; set; }
+        public string? JobPostCompanyName { get; set; }
+        public string? JobPostLocation { get; set; }
     }
 }

@@ -3,5 +3,6 @@ namespace Core.Enums;
 public enum Roles
 {
     Admin,
-    Staff
+    Staff,
+    Applicant
 }

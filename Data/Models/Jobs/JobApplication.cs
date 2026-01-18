@@ -32,6 +32,9 @@ namespace Data.Models
         public string? CoverLetterUrl { get; set; }
 
         public int JobPostId { get; set; }
-        public virtual JobPost JobPost { get; set; }
+        public virtual JobPost JobPost { get; set; } = null!;
+
+        public int? ApplicantUserId { get; set; }
+        public virtual QXIUser? ApplicantUser { get; set; }
     }
 }

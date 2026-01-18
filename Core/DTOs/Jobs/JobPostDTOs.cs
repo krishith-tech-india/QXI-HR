@@ -10,6 +10,8 @@ namespace Core.DTOs
         public string Skils { get; set; } = null!;
         public string Salary { get; set; } = null!;
         public string Experience { get; set; } = null!;
+        public ICollection<int>? SkillIds { get; set; }
+        public ICollection<SkillDTO>? Skills { get; set; }
         public ICollection<JobApplicationDTO>? Applications { get; set; }
     }
 }

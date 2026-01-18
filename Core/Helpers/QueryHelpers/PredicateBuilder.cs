@@ -105,7 +105,7 @@ namespace Core.Helpers
             return Expression.Lambda<Func<T, bool>>(combinedExpression ?? Expression.Constant(true), parameter);
         }
 
-        private static Expression BuildFieldExpression<T>(ParameterExpression param, CommonFilterParams filter)
+        private static Expression? BuildFieldExpression<T>(ParameterExpression param, CommonFilterParams filter)
         {
             var prop = typeof(T).GetProperties().FirstOrDefault(x => x.Name.Equals(filter.FieldName, StringComparison.OrdinalIgnoreCase));
 
@@ -199,7 +199,7 @@ namespace Core.Helpers
 
             private ParameterRebinder(Dictionary<ParameterExpression, ParameterExpression> map)
             {
-                this.map = map ?? new Dictionary<ParameterExpression, ParameterExpression>();
+                this.map = map ?? throw new ArgumentNullException(nameof(map));
             }
 
             public static Expression ReplaceParameters(Dictionary<ParameterExpression, ParameterExpression> map, Expression exp)
@@ -209,9 +209,7 @@ namespace Core.Helpers
 
             protected override Expression VisitParameter(ParameterExpression p)
             {
-                ParameterExpression replacement;
-
-                if (map.TryGetValue(p, out replacement))
+                if (map.TryGetValue(p, out var replacement))
                 {
                     p = replacement;
                 }

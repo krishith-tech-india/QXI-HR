@@ -16,5 +16,7 @@ namespace Core.DTOs
         public bool IsActive { get; set; }
         public ICollection<int>? RoleIds { get; set; }
         public ICollection<QXIRoleDTO>? Roles { get; set; }
+        public ICollection<int>? SkillIds { get; set; }
+        public ICollection<SkillDTO>? Skills { get; set; }
     }
 }

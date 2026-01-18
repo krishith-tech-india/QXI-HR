@@ -1,11 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Plus, Trash2 } from 'lucide-react';
+import { API_ENDPOINTS } from '@/config/apiConfig';
+import SkillMultiSelect from '@/components/SkillMultiSelect';
 
 const SignupForm = () => {
   const { toast } = useToast();
+  const [skills, setSkills] = useState([]);
+  const [isLoadingSkills, setIsLoadingSkills] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -16,7 +20,7 @@ const SignupForm = () => {
     locationCountry: '',
     education: [{ degree: '', institution: '', year: '' }],
     experience: [{ company: '', title: '', duration: '', responsibilities: '' }],
-    skills: '',
+    skillIds: [],
     certifications: '',
     languages: '',
     portfolioUrl: '',
@@ -29,6 +33,28 @@ const SignupForm = () => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
+
+  useEffect(() => {
+    const fetchSkills = async () => {
+      setIsLoadingSkills(true);
+      try {
+        const response = await fetch(API_ENDPOINTS.getSkills, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ page: 1, pageSize: 500, sortBy: 'name' })
+        });
+        const result = await response.json();
+        if (result.isSuccess) {
+          setSkills(result.data || []);
+        }
+      } catch (error) {
+        setSkills([]);
+      } finally {
+        setIsLoadingSkills(false);
+      }
+    };
+    fetchSkills();
+  }, []);
 
   const handleDynamicChange = (index, event, section) => {
     const values = [...formData[section]];
@@ -63,7 +89,15 @@ const SignupForm = () => {
     }
 
     const signups = JSON.parse(localStorage.getItem('candidateSignups') || '[]');
-    const newSignup = { ...formData, id: Date.now(), submittedAt: new Date().toISOString() };
+    const selectedSkillNames = skills
+      .filter((skill) => formData.skillIds.includes(skill.id))
+      .map((skill) => skill.name);
+    const newSignup = {
+      ...formData,
+      skills: selectedSkillNames.join(', '),
+      id: Date.now(),
+      submittedAt: new Date().toISOString()
+    };
     signups.push(newSignup);
     localStorage.setItem('candidateSignups', JSON.stringify(signups));
 
@@ -77,7 +111,7 @@ const SignupForm = () => {
       fullName: '', email: '', phone: '', dob: '', locationCity: '', locationState: '', locationCountry: '',
       education: [{ degree: '', institution: '', year: '' }],
       experience: [{ company: '', title: '', duration: '', responsibilities: '' }],
-      skills: '', certifications: '', languages: '', portfolioUrl: '', expectedSalary: '', availability: '', otherInfo: ''
+      skillIds: [], certifications: '', languages: '', portfolioUrl: '', expectedSalary: '', availability: '', otherInfo: ''
     });
   };
 
@@ -158,13 +192,19 @@ const SignupForm = () => {
             <div className="space-y-6">
               <h3 className="text-xl font-semibold text-gray-800">Skills & Professional Info</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <TextAreaField name="skills" label="Skills (comma-separated)" value={formData.skills} onChange={handleInputChange} />
                 <TextAreaField name="certifications" label="Certifications" value={formData.certifications} onChange={handleInputChange} />
                 <InputField name="languages" label="Languages Known" value={formData.languages} onChange={handleInputChange} />
                 <InputField name="portfolioUrl" label="LinkedIn / Portfolio URL" type="url" value={formData.portfolioUrl} onChange={handleInputChange} />
                 <InputField name="expectedSalary" label="Expected Salary (e.g., ₹10 LPA)" value={formData.expectedSalary} onChange={handleInputChange} />
                 <InputField name="availability" label="Availability / Notice Period" value={formData.availability} onChange={handleInputChange} />
               </div>
+              <SkillMultiSelect
+                label="Skills"
+                skills={skills}
+                selectedIds={formData.skillIds}
+                onChange={(skillIds) => setFormData(prev => ({ ...prev, skillIds }))}
+                isLoading={isLoadingSkills}
+              />
               <TextAreaField name="otherInfo" label="Any Other Information" value={formData.otherInfo} onChange={handleInputChange} rows={4} />
             </div>
 

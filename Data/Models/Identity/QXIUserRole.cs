@@ -12,7 +12,7 @@ namespace Data.Models
         public int UserId { get; set; }
         public int RoleId { get; set; }
 
-        public virtual QXIRole Role { get; set; }
-        public virtual QXIUser User { get; set; }
+        public virtual QXIRole Role { get; set; } = null!;
+        public virtual QXIUser User { get; set; } = null!;
     }
 }

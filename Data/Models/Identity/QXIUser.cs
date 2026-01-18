@@ -46,6 +46,9 @@ namespace Data.Models
 
         public bool IsPublic { get; set; } = true;
 
+        public virtual ApplicantProfile? ApplicantProfile { get; set; }
         public virtual ICollection<QXIUserRole> UserRoles { get; set; } = [];
+        public virtual ICollection<ApplicantSkill> ApplicantSkills { get; set; } = new List<ApplicantSkill>();
+        public virtual ICollection<JobApplication> JobApplications { get; set; } = new List<JobApplication>();
     }
 }

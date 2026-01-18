@@ -12,30 +12,31 @@ namespace Data.Models
 
         [StringLength(100)]
         [Unicode(false)]
-        public string Title { get; set; }
+        public string Title { get; set; } = string.Empty;
 
         [Unicode(false)]
-        public string Description { get; set; }
+        public string Description { get; set; } = string.Empty;
 
         [StringLength(200)]
         [Unicode(false)]
-        public string CompanyName { get; set; }
+        public string CompanyName { get; set; } = string.Empty;
 
         [StringLength(100)]
         [Unicode(false)]
-        public string Location { get; set; }
+        public string Location { get; set; } = string.Empty;
 
         [Unicode(false)]
-        public string Skils { get; set; }
-
-        [StringLength(200)]
-        [Unicode(false)]
-        public string Salary { get; set; }
+        public string Skils { get; set; } = string.Empty;
 
         [StringLength(200)]
         [Unicode(false)]
-        public string Experience { get; set; }
+        public string Salary { get; set; } = string.Empty;
+
+        [StringLength(200)]
+        [Unicode(false)]
+        public string Experience { get; set; } = string.Empty;
 
         public virtual ICollection<JobApplication> Applications { get; set; } = new List<JobApplication>();
+        public virtual ICollection<JobPostSkill> JobPostSkills { get; set; } = new List<JobPostSkill>();
     }
 }

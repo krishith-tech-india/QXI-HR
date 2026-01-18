@@ -62,9 +62,10 @@ namespace Infrastructure.Services
             Expression<Func<GallaryImage, bool>> filter = PredicateBuilder.BuildFilterExpression<GallaryImage>(requestParams.Filters);
             if (!string.IsNullOrWhiteSpace(requestParams.SearchKeyword))
             {
-                requestParams.SearchKeyword = requestParams.SearchKeyword.Trim().ToLikeFilterString(Operator.Contains);
-                Expression<Func<GallaryImage, bool>> searchExpr = gi => EF.Functions.ILike(gi.Description, requestParams.SearchKeyword)
-                                                                   || EF.Functions.ILike(gi.Title, requestParams.SearchKeyword);
+                var searchKeyword = requestParams.SearchKeyword.Trim().ToLikeFilterString(Operator.Contains);
+                requestParams.SearchKeyword = searchKeyword;
+                Expression<Func<GallaryImage, bool>> searchExpr = gi => EF.Functions.ILike(gi.Description ?? string.Empty, searchKeyword)
+                                                                   || EF.Functions.ILike(gi.Title ?? string.Empty, searchKeyword);
 
                 filter = filter == null ? searchExpr : PredicateBuilder.And(filter, searchExpr);
             }

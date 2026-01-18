@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import { API_ENDPOINTS } from '@/config/apiConfig';
+import SkillMultiSelect from '@/components/SkillMultiSelect';
 
 const SubmitCvForm = () => {
   const [cvData, setCvData] = useState({
@@ -11,10 +13,34 @@ const SubmitCvForm = () => {
     phone: '',
     position: '',
     experience: '',
-    skills: '',
+    skillIds: [],
     resume: null
   });
   const { toast } = useToast();
+  const [skills, setSkills] = useState([]);
+  const [isLoadingSkills, setIsLoadingSkills] = useState(false);
+
+  useEffect(() => {
+    const fetchSkills = async () => {
+      setIsLoadingSkills(true);
+      try {
+        const response = await fetch(API_ENDPOINTS.getSkills, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ page: 1, pageSize: 500, sortBy: 'name' })
+        });
+        const result = await response.json();
+        if (result.isSuccess) {
+          setSkills(result.data || []);
+        }
+      } catch (error) {
+        setSkills([]);
+      } finally {
+        setIsLoadingSkills(false);
+      }
+    };
+    fetchSkills();
+  }, []);
 
   const handleCvSubmit = (e) => {
     e.preventDefault();
@@ -28,9 +54,13 @@ const SubmitCvForm = () => {
       return;
     }
 
+    const selectedSkillNames = skills
+      .filter((skill) => cvData.skillIds.includes(skill.id))
+      .map((skill) => skill.name);
     const submissions = JSON.parse(localStorage.getItem('cvSubmissions') || '[]');
     const newSubmission = {
       ...cvData,
+      skills: selectedSkillNames.join(', '),
       id: Date.now(),
       submittedAt: new Date().toISOString()
     };
@@ -48,7 +78,7 @@ const SubmitCvForm = () => {
       phone: '',
       position: '',
       experience: '',
-      skills: '',
+      skillIds: [],
       resume: null
     });
   };
@@ -152,18 +182,13 @@ const SubmitCvForm = () => {
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Key Skills
-              </label>
-              <textarea
-                value={cvData.skills}
-                onChange={(e) => setCvData({ ...cvData, skills: e.target.value })}
-                rows={3}
-                className="custom-input"
-                placeholder="List your key skills and competencies..."
-              />
-            </div>
+            <SkillMultiSelect
+              label="Key Skills"
+              skills={skills}
+              selectedIds={cvData.skillIds}
+              onChange={(skillIds) => setCvData((prev) => ({ ...prev, skillIds }))}
+              isLoading={isLoadingSkills}
+            />
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">

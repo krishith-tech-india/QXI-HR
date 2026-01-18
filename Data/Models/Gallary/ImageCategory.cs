@@ -12,7 +12,7 @@ namespace Data.Models
 
         [StringLength(100)]
         [Unicode(false)]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         public virtual ICollection<GallaryImage> Images { get; set; } = [];
     }

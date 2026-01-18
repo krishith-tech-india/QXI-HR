@@ -21,6 +21,7 @@ const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userRole, setUserRole] = useState(null);
+    const [userName, setUserName] = useState("");
     const [mobileOpenItems, setMobileOpenItems] = useState({});
     const location = useLocation();
     const navigate = useNavigate();
@@ -30,12 +31,14 @@ const Navbar = () => {
         const role = sessionStorage.getItem("role");
         setIsAuthenticated(!!token);
         setUserRole(role);
+        setUserName(getUserDisplayName(token));
     }, [location]);
 
     const handleLogout = () => {
         sessionStorage.clear();
         setIsAuthenticated(false);
         setUserRole(null);
+        setUserName("");
         navigate("/");
         window.location.reload();
     };
@@ -107,7 +110,12 @@ const Navbar = () => {
             auth: "adminOrStaff",
         },
         { name: "Contact", path: "/contact", icon: Phone, auth: "any" },
-        { name: "Login", path: "/login", icon: LogIn, auth: "unauthenticated" },
+        {
+            name: "Login/Signup",
+            path: "/login",
+            icon: LogIn,
+            auth: "unauthenticated",
+        },
     ];
 
     const isActive = (item) => {
@@ -136,6 +144,8 @@ const Navbar = () => {
             [key]: !prev[key],
         }));
     };
+
+    const accountLabel = userName || "Account";
 
     return (
         <nav className="bg-white shadow-lg sticky top-0 z-50">
@@ -203,7 +213,9 @@ const Navbar = () => {
                                                     {child.children?.length && (
                                                         <div className="absolute left-full top-0 ml-2 w-56 bg-white rounded-md shadow-lg border border-gray-100 py-2 opacity-0 invisible group-hover/child:opacity-100 group-hover/child:visible transition-all duration-150">
                                                             {child.children.map(
-                                                                (grandchild) => (
+                                                                (
+                                                                    grandchild
+                                                                ) => (
                                                                     <Link
                                                                         key={
                                                                             grandchild.name
@@ -250,13 +262,36 @@ const Navbar = () => {
                             );
                         })}
                         {isAuthenticated && (
-                            <button
-                                onClick={handleLogout}
-                                className="px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-1 text-gray-700 hover:text-red-600 hover:bg-red-50"
-                            >
-                                <LogOut className="w-4 h-4" />
-                                <span>Logout</span>
-                            </button>
+                            <div className="relative group">
+                                <button
+                                    type="button"
+                                    className="px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-1 text-gray-700 hover:text-blue-600 hover:bg-gray-100"
+                                >
+                                    <span>{accountLabel}</span>
+                                    <ChevronDown className="w-4 h-4" />
+                                </button>
+                                <div className="absolute right-0 mt-2 w-44 bg-white rounded-md shadow-lg border border-gray-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150">
+                                    <Link
+                                        to="/profile"
+                                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600"
+                                    >
+                                        Profile
+                                    </Link>
+                                    <Link
+                                        to="/profile/applications"
+                                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600"
+                                    >
+                                        My Applications
+                                    </Link>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-red-600 flex items-center space-x-2"
+                                    >
+                                        <LogOut className="w-4 h-4" />
+                                        <span>Logout</span>
+                                    </button>
+                                </div>
+                            </div>
                         )}
                     </div>
 
@@ -406,16 +441,52 @@ const Navbar = () => {
                                 );
                             })}
                             {isAuthenticated && (
-                                <button
-                                    onClick={() => {
-                                        handleLogout();
-                                        setIsOpen(false);
-                                    }}
-                                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 flex items-center space-x-2 text-gray-700 hover:text-red-600 hover:bg-red-50"
-                                >
-                                    <LogOut className="w-5 h-5" />
-                                    <span>Logout</span>
-                                </button>
+                                <div>
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            toggleMobileItem("account")
+                                        }
+                                        className="w-full flex items-center justify-between px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 text-gray-700 hover:text-blue-600 hover:bg-gray-100"
+                                    >
+                                        <span>{accountLabel}</span>
+                                        <ChevronDown
+                                            className={`w-4 h-4 transition-transform ${
+                                                mobileOpenItems.account
+                                                    ? "rotate-180"
+                                                    : ""
+                                            }`}
+                                        />
+                                    </button>
+                                    {mobileOpenItems.account && (
+                                        <div className="ml-4 space-y-1">
+                                            <Link
+                                                to="/profile"
+                                                onClick={() => setIsOpen(false)}
+                                                className="block px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 text-gray-600 hover:text-blue-600 hover:bg-gray-100"
+                                            >
+                                                Profile
+                                            </Link>
+                                            <Link
+                                                to="/profile/applications"
+                                                onClick={() => setIsOpen(false)}
+                                                className="block px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 text-gray-600 hover:text-blue-600 hover:bg-gray-100"
+                                            >
+                                                My Applications
+                                            </Link>
+                                            <button
+                                                onClick={() => {
+                                                    handleLogout();
+                                                    setIsOpen(false);
+                                                }}
+                                                className="block w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-2 text-gray-600 hover:text-red-600 hover:bg-red-50"
+                                            >
+                                                <LogOut className="w-4 h-4" />
+                                                <span>Logout</span>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             )}
                         </div>
                     </motion.div>
@@ -423,6 +494,27 @@ const Navbar = () => {
             </div>
         </nav>
     );
+};
+
+const getUserDisplayName = (token) => {
+    if (!token) return "";
+    try {
+        const payload = token.split(".")[1];
+        if (!payload) return "";
+        const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+        const decoded = JSON.parse(atob(normalized));
+        return (
+            decoded.name ||
+            decoded[
+                "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
+            ] ||
+            decoded.email ||
+            decoded.sub ||
+            ""
+        );
+    } catch (error) {
+        return "";
+    }
 };
 
 export default Navbar;

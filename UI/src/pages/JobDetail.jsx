@@ -42,6 +42,8 @@ const JobDetail = () => {
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [pendingAction, setPendingAction] = useState(null);
     const [confirmMessage, setConfirmMessage] = useState("");
+    const [hasApplied, setHasApplied] = useState(false);
+    const [isCheckingApplication, setIsCheckingApplication] = useState(false);
 
     useEffect(() => {
         const role = sessionStorage.getItem("role");
@@ -188,18 +190,80 @@ const JobDetail = () => {
         setIsConfirmOpen(true);
     };
 
+    const checkAlreadyApplied = useCallback(async () => {
+        const token = sessionStorage.getItem("token");
+        if (!token) return false;
+
+        setIsCheckingApplication(true);
+        try {
+            const response = await fetch(
+                API_ENDPOINTS.checkApplicationExists,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ jobPostId: Number(jobID) }),
+                }
+            );
+            const result = await response.json();
+            if (result.isSuccess) {
+                return result.data === true;
+            }
+            toast({
+                title: "Error",
+                description:
+                    result?.errors?.[0]?.description ||
+                    result?.errorMessage ||
+                    "Unable to check application status.",
+                variant: "destructive",
+            });
+            return false;
+        } catch (error) {
+            toast({
+                title: "Network Error",
+                description: "Could not connect to the server.",
+                variant: "destructive",
+            });
+            return false;
+        } finally {
+            setIsCheckingApplication(false);
+        }
+    }, [jobID, toast]);
+
     const handleApplyNow = () => {
+        if (hasApplied) return;
         setIsApplyModalOpen(true);
     };
+
+    const canManage = userRole === "Admin" || userRole === "Staff";
+    const isApplicant = userRole === "Applicant";
+    const skillList =
+        job?.skills?.length > 0
+            ? job.skills.map((skill) => skill.name).join(", ")
+            : job?.skils;
+
+    useEffect(() => {
+        if (!isApplicant || !jobID) return;
+        let isActive = true;
+        const runCheck = async () => {
+            const alreadyApplied = await checkAlreadyApplied();
+            if (isActive) {
+                setHasApplied(alreadyApplied);
+            }
+        };
+        runCheck();
+        return () => {
+            isActive = false;
+        };
+    }, [isApplicant, jobID, checkAlreadyApplied]);
 
     const confirmAction = () => {
         if (pendingAction) pendingAction();
         setIsConfirmOpen(false);
         setPendingAction(null);
     };
-
-    const canManage = userRole === "Admin" || userRole === "Staff";
-    const showApply = !userRole;
 
     if (!job) return null;
 
@@ -235,14 +299,37 @@ const JobDetail = () => {
                                 </div>
                             </div>
                             <div className="mt-4 md:mt-0 flex-shrink-0 space-x-2">
-                                {showApply && (
+                                {isApplicant && (
                                     <Button
                                         onClick={handleApplyNow}
                                         size="lg"
-                                        className="corporate-gradient text-white"
+                                        className={
+                                            hasApplied
+                                                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                                                : "corporate-gradient text-white"
+                                        }
+                                        disabled={hasApplied || isCheckingApplication}
                                     >
-                                        Apply Now
+                                        {hasApplied ? "Already Applied" : "Apply Now"}
                                     </Button>
+                                )}
+                                {!userRole && (
+                                    <div className="flex flex-col sm:flex-row gap-2">
+                                        <Button
+                                            onClick={() => navigate("/login")}
+                                            size="lg"
+                                            className="corporate-gradient text-white"
+                                        >
+                                            Login to Apply
+                                        </Button>
+                                        <Button
+                                            onClick={() => navigate("/signup")}
+                                            size="lg"
+                                            variant="outline"
+                                        >
+                                            Sign Up
+                                        </Button>
+                                    </div>
                                 )}
                                 {canManage && (
                                     <>
@@ -284,7 +371,7 @@ const JobDetail = () => {
                             <DetailItem
                                 icon={<Code size={20} />}
                                 label="Skills"
-                                value={job.skils}
+                                value={skillList}
                             />
                         </div>
 
@@ -318,6 +405,7 @@ const JobDetail = () => {
             <ApplyNowModal
                 isOpen={isApplyModalOpen}
                 onClose={() => setIsApplyModalOpen(false)}
+                onApplied={() => setHasApplied(true)}
                 jobId={jobID}
             />
 

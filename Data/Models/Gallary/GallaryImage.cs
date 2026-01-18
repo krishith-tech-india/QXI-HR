@@ -20,7 +20,7 @@ namespace Data.Models
 
         [StringLength(500)]
         [DataType(DataType.ImageUrl)]
-        public string ImageUrl { get; set; }
+        public string ImageUrl { get; set; } = string.Empty;
 
         public int? CategoryId { get; set; }
 

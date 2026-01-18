@@ -4,7 +4,7 @@
     {
         public T? Data { get; set; }
 
-        public static Response<T> Success(T data, int statusCode)
+        public static Response<T> Success(T? data, int statusCode)
         {
             return new Response<T>
             {

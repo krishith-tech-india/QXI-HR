@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { API_ENDPOINTS } from '@/config/apiConfig';
@@ -91,112 +90,143 @@ const Login = () => {
         <meta property="og:description" content="Secure login portal for QXI HR (OPC) PRIVATE LIMITED clients and candidates." />
       </Helmet>
 
-      <section className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
+      <section className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 py-12 px-4 sm:px-6 lg:px-8">
+        <motion.div
+          className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-gradient-to-br from-amber-400/30 to-orange-500/20 blur-3xl"
+          animate={{ y: [0, 20, 0], x: [0, 12, 0] }}
+          transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-gradient-to-tr from-sky-400/25 to-emerald-400/20 blur-3xl"
+          animate={{ y: [0, -20, 0], x: [0, -16, 0] }}
+          transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut' }}
+        />
+
+        <div className="relative max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-10 items-center">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
-            className="text-center"
+            className="text-white space-y-6"
           >
-            <div className="flex justify-center mb-6">
-              <div className="w-16 h-16 corporate-gradient rounded-full flex items-center justify-center">
-                <Lock className="w-8 h-8 text-white" />
-              </div>
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Welcome Back
-            </h1>
-            <p className="text-gray-600">
-              Sign in to your QXI HR account
+            <p className="uppercase tracking-[0.35em] text-xs text-white/60">
+              Secure Access
             </p>
+            <h1 className="text-4xl md:text-5xl font-serif font-semibold">
+              Welcome back to the QXI HR talent portal.
+            </h1>
+            <p className="text-white/70 max-w-xl">
+              Track applications, update your profile, and stay connected with
+              opportunities curated for you.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[
+                'Private workspace for your profile data',
+                'Instant access to applied job history',
+                'Secure JWT session handling',
+                'Priority updates for shortlisted roles',
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="bg-white/10 border border-white/20 rounded-xl p-4 text-sm text-white/80 backdrop-blur"
+                >
+                  {item}
+                </div>
+              ))}
+            </div>
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="bg-white rounded-xl shadow-lg p-8"
+            className="relative"
+            style={{ perspective: 1200 }}
           >
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter your email"
-                    required
-                  />
+            <motion.div
+              whileHover={{ rotateX: 3, rotateY: -3 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white/95 backdrop-blur rounded-2xl shadow-2xl border border-white/70 p-8"
+            >
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-emerald-400 flex items-center justify-center shadow-lg">
+                  <ShieldCheck className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-semibold text-gray-900">Sign in</h2>
+                  <p className="text-sm text-gray-500">Access your dashboard</p>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Password
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-gray-400" />
+              <form onSubmit={handleSubmit} className="space-y-6 mt-8">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Mail className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter your email"
+                      required
+                    />
                   </div>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter your password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Lock className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter your password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                      ) : (
+                        <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="w-full corporate-gradient text-white"
+                    disabled={loading}
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                    ) : (
-                      <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                    )}
-                  </button>
+                    {loading ? 'Signing In...' : 'Sign In'}
+                  </Button>
                 </div>
-              </div>
+              </form>
 
-              <div className="pt-2">
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="w-full corporate-gradient text-white"
-                  disabled={loading}
-                >
-                  {loading ? 'Signing In...' : 'Sign In'}
-                </Button>
+              <div className="mt-6 text-sm text-gray-600">
+                New applicant?{' '}
+                <a href="/signup" className="text-blue-600 hover:text-blue-500">
+                  Create an account
+                </a>
               </div>
-            </form>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-center"
-          >
-            <p className="text-sm text-gray-600">
-              By signing in, you agree to our{' '}
-              <a href="#" className="text-blue-600 hover:text-blue-500">
-                Terms of Service
-              </a>{' '}
-              and{' '}
-              <a href="#" className="text-blue-600 hover:text-blue-500">
-                Privacy Policy
-              </a>
-            </p>
+            </motion.div>
           </motion.div>
         </div>
       </section>

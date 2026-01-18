@@ -9,7 +9,7 @@ namespace Core.DTOs
     public class PagedResponse<T> : Response<IEnumerable<T>>
     {
         public int Total { get; set; }
-        public RequestParams RequestParams { get; set; }
+        public RequestParams RequestParams { get; set; } = new();
 
         public static PagedResponse<T> Success(IEnumerable<T> data, int total, RequestParams requestParams, int statusCode)
         {

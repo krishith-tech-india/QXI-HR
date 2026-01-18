@@ -38,6 +38,7 @@ const JobPostRow = ({ job }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [applications, setApplications] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    const skillList = job.skills?.length ? job.skills.map((skill) => skill.name).join(", ") : job.skils;
     const { toast } = useToast();
 
     const fetchApplications = useCallback(async () => {
@@ -104,10 +105,10 @@ const JobPostRow = ({ job }) => {
                                 {job.salary}
                             </span>
                         )}
-                        {job.skils && (
+                        {skillList && (
                             <span className="flex items-center">
                                 <Code size={12} className="mr-1" />
-                                {job.skils}
+                                {skillList}
                             </span>
                         )}
                     </div>
@@ -151,7 +152,7 @@ const JobPostRow = ({ job }) => {
     );
 };
 
-const FilterControls = ({ filters, sorting }) => {
+const FilterControls = ({ filters, sorting, skills }) => {
     return (
         <div className="bg-gray-50 p-6 rounded-xl mb-12 border">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
@@ -201,14 +202,29 @@ const FilterControls = ({ filters, sorting }) => {
                 </div>
                 <div className="relative">
                     <Code className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <Input
-                        placeholder="Filter by Skills..."
-                        value={filters.skils}
-                        onChange={(e) =>
-                            filters.onFilterChange({ skils: e.target.value })
+                    <Select
+                        value={filters.skillId || "all"}
+                        onValueChange={(value) =>
+                            filters.onFilterChange({
+                                skillId: value === "all" ? "" : value,
+                            })
                         }
-                        className="pl-10"
-                    />
+                    >
+                        <SelectTrigger className="pl-10">
+                            <SelectValue placeholder="Filter by Skill..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Skills</SelectItem>
+                            {skills.map((skill) => (
+                                <SelectItem
+                                    key={skill.id}
+                                    value={String(skill.id)}
+                                >
+                                    {skill.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
             </div>
             <div className="flex flex-wrap items-center justify-between gap-4">
@@ -256,7 +272,7 @@ const FilterControls = ({ filters, sorting }) => {
                             title: "",
                             companyName: "",
                             location: "",
-                            skils: "",
+                            skillId: "",
                         });
                     }}
                 >
@@ -277,8 +293,9 @@ const JobApplications = () => {
         title: "",
         companyName: "",
         location: "",
-        skils: "",
+        skillId: "",
     });
+    const [skills, setSkills] = useState([]);
     const [searchKeyword, setSearchKeyword] = useState("");
     const [sortBy, setSortBy] = useState("title");
     const [isDescending, setIsDescending] = useState(false);
@@ -366,6 +383,25 @@ const JobApplications = () => {
     }, [fetchAllJobPosts]);
 
     useEffect(() => {
+        const fetchSkills = async () => {
+            try {
+                const response = await fetch(API_ENDPOINTS.getSkills, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ page: 1, pageSize: 99, sortBy: "name" }),
+                });
+                const result = await response.json();
+                if (result.isSuccess) {
+                    setSkills(result.data || []);
+                }
+            } catch (error) {
+                setSkills([]);
+            }
+        };
+        fetchSkills();
+    }, []);
+
+    useEffect(() => {
         setCurrentPage(1);
     }, [debouncedSearch, debouncedFilters, sortBy, isDescending]);
 
@@ -420,6 +456,7 @@ const JobApplications = () => {
                             onSortChange: setSortBy,
                             onDirectionChange: setIsDescending,
                         }}
+                        skills={skills}
                     />
 
                     <div className="space-y-4">

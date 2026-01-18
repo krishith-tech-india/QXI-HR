@@ -13,12 +13,12 @@ namespace Data.Models
         [Required]
         [StringLength(200)]
         [Unicode(false)]
-        public string Email { get; set; }
+        public string Email { get; set; } = string.Empty;
 
         // storing as string to allow leading zeros and length constraint
         [Required]
         [StringLength(100)]
         [Unicode(false)]
-        public string VerificationCode { get; set; }
+        public string VerificationCode { get; set; } = string.Empty;
     }
 }

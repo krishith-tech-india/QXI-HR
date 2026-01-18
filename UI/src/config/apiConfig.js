@@ -3,10 +3,27 @@ const API_BASE_URL =
 
 export const API_ENDPOINTS = {
     login: `${API_BASE_URL}api/Auth/login`,
+    registerApplicant: `${API_BASE_URL}api/Auth/register`,
+    startApplicantSignup: `${API_BASE_URL}api/ApplicantSignup/Start`,
+    verifyApplicantSignup: `${API_BASE_URL}api/ApplicantSignup/Verify`,
+    getApplicantSignupDraft: (email, code) =>
+        `${API_BASE_URL}api/ApplicantSignup/Draft?email=${encodeURIComponent(email)}&verificationCode=${encodeURIComponent(code)}`,
+    saveApplicantStep2: `${API_BASE_URL}api/ApplicantSignup/Step2`,
+    saveApplicantStep3: `${API_BASE_URL}api/ApplicantSignup/Step3`,
+    saveApplicantStep4: `${API_BASE_URL}api/ApplicantSignup/Step4`,
+    saveApplicantStep5: `${API_BASE_URL}api/ApplicantSignup/Step5`,
+    getApplicantProfileByUserId: (id) =>
+        `${API_BASE_URL}api/ApplicantProfiles/GetByUserId/${id}`,
+    getMyApplicantProfile: `${API_BASE_URL}api/ApplicantProfiles/GetMyProfile`,
+    updateApplicantProfile: (id) =>
+        `${API_BASE_URL}api/ApplicantProfiles/Upsert/${id}`,
+    getApplicantUploadUrl: (filename, category) =>
+        `${API_BASE_URL}api/ApplicantProfiles/GetUploadUrl?filename=${encodeURIComponent(filename)}&category=${encodeURIComponent(category || "")}`,
     getJobPosts: `${API_BASE_URL}api/JobPosts/GetAll`,
     getJobPostById: (id) => `${API_BASE_URL}api/JobPosts/GetById/${id}`,
     getApplicationsByJobId: (jobId) =>
         `${API_BASE_URL}api/JobApplications/GetByJobPost/ByJob/${jobId}`,
+    getMyApplications: `${API_BASE_URL}api/JobApplications/GetMyApplications`,
     createJobPost: `${API_BASE_URL}api/JobPosts/Create`,
     updateJobPost: (id) => `${API_BASE_URL}api/JobPosts/Update/${id}`,
     deleteJobPost: (id) => `${API_BASE_URL}api/JobPosts/Delete/${id}`,
@@ -19,10 +36,13 @@ export const API_ENDPOINTS = {
     verifyEmailCode: `${API_BASE_URL}api/JobApplications/VerifyEmailCode`,
     sendContactEmail: `${API_BASE_URL}api/JobApplications/SendEMailContactMessage`,
     getUsers: `${API_BASE_URL}api/Users/GetAll`,
+    getUserById: (id) => `${API_BASE_URL}api/Users/GetById/${id}`,
     createUser: `${API_BASE_URL}api/Users/Create`,
     updateUser: (id) => `${API_BASE_URL}api/Users/Update/${id}`,
     deleteUser: (id) => `${API_BASE_URL}api/Users/Delete/${id}`,
     getRoles: `${API_BASE_URL}api/Roles/GetAll`,
+    getSkills: `${API_BASE_URL}api/Skills/GetAll`,
+    createSkill: `${API_BASE_URL}api/Skills/Create`,
     // Gallery Endpoints
     getImageCategories: `${API_BASE_URL}api/ImageCategories/GetAll`,
     createImageCategory: `${API_BASE_URL}api/ImageCategories/Create`,

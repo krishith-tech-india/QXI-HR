@@ -13,10 +13,10 @@ namespace Data.Models.Identity
 
         [StringLength(50)]
         [Unicode(false)]
-        public string RoleName { get; set; }
+        public string RoleName { get; set; } = string.Empty;
 
         [StringLength(500)]
-        public string Description { get; set; }
+        public string Description { get; set; } = string.Empty;
 
         public virtual ICollection<QXIUserRole> UserRoles { get; set; } = new List<QXIUserRole>();
     }

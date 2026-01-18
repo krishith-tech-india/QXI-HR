@@ -15,7 +15,10 @@ namespace Infrastructure
             services.AddScoped<IImageCategoryService, ImageCategoryService>();
             services.AddScoped<IGallaryImageService, GallaryImageService>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IApplicantProfileService, ApplicantProfileService>();
+            services.AddScoped<IApplicantSignupService, ApplicantSignupService>();
             services.AddScoped<IRoleService, RoleService>();
+            services.AddScoped<ISkillService, SkillService>();
             services.AddScoped<IJwtTokenService, JwtTokenService>();
             services.AddScoped<IClientService, ClientService>();
             return services;
