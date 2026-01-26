@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.4
 FROM node:20-alpine AS build
 WORKDIR /app
 
@@ -6,10 +7,10 @@ RUN npm ci
 
 COPY UI/ .
 ARG VITE_API_BASE_URL=http://localhost:5215/
-ARG VITE_TINYMCE_API_KEY=
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
-ENV VITE_TINYMCE_API_KEY=${VITE_TINYMCE_API_KEY}
-RUN npm run build
+RUN --mount=type=secret,id=VITE_TINYMCE_API_KEY \
+  VITE_TINYMCE_API_KEY="$(cat /run/secrets/VITE_TINYMCE_API_KEY 2>/dev/null || true)" \
+  npm run build
 
 FROM nginx:stable-alpine
 COPY UI/nginx.conf /etc/nginx/conf.d/default.conf
