@@ -18,6 +18,7 @@ const Contact = () => {
     });
     const { toast } = useToast();
     const { showLoader, hideLoader } = useLoader();
+    const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
     const contactInfo = [
         {
@@ -64,6 +65,15 @@ const Contact = () => {
             toast({
                 title: "Error",
                 description: "Please fill in all required fields.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (!isValidEmail(formData.email)) {
+            toast({
+                title: "Validation Error",
+                description: "Please enter a valid email address.",
                 variant: "destructive",
             });
             return;

@@ -1,9 +1,10 @@
 using Core.DTOs;
 namespace Infrastructure.Services
 {
-    public interface IJobApplicationService : IEntityCrudService<JobApplicationDTO>
+    public interface IJobApplicationService : IEntityCrudService<JobApplicationDTO, int>
     {
         Task<IEnumerable<JobApplicationDTO>> GetByJobPostIdAsync(int jobPostId);
+        Task<IEnumerable<JobApplicationDTO>> GetByJobPostIdAsync(int jobPostId, bool includeInactive);
         Task<IEnumerable<JobApplicationDTO>> GetByApplicantUserIdAsync(int userId);
 
         Task<ResumePresignedUrlDto> GetUploadUrl(string filename);

@@ -34,6 +34,9 @@ jobs:
                   api_url="${{ secrets.VITE_API_BASE_URL }}"
                   if [ -z "$api_url" ]; then api_url="http://localhost:5215/"; fi
                   echo "VITE_API_BASE_URL=$api_url" >> $GITHUB_ENV
+                  tinymce_key="${{ secrets.VITE_TINYMCE_API_KEY }}"
+                  if [ -z "$tinymce_key" ]; then tinymce_key=""; fi
+                  echo "VITE_TINYMCE_API_KEY=$tinymce_key" >> $GITHUB_ENV
 
             - name: Build & push API image
               uses: docker/build-push-action@v6
@@ -53,6 +56,7 @@ jobs:
                   push: true
                   build-args: |
                       VITE_API_BASE_URL=${{ env.VITE_API_BASE_URL }}
+                      VITE_TINYMCE_API_KEY=${{ env.VITE_TINYMCE_API_KEY }}
                   tags: |
                       ${{ env.IMAGE_UI }}:latest
                       ${{ env.IMAGE_UI }}:${{ github.sha }}
@@ -87,6 +91,7 @@ jobs:
                       IMAGE_API="${{ env.IMAGE_API }}"
                       IMAGE_UI="${{ env.IMAGE_UI }}"
                       VITE_API_BASE_URL="${{ env.VITE_API_BASE_URL }}"
+                      VITE_TINYMCE_API_KEY="${{ secrets.VITE_TINYMCE_API_KEY }}"
                       API_PORT_HOST="${{ secrets.API_PORT_HOST }}"
                       UI_PORT_HOST="${{ secrets.UI_PORT_HOST }}"
                       POSTGRES_USER="${{ secrets.POSTGRES_USER }}"
@@ -147,6 +152,7 @@ jobs:
                       CLOUDFLARER2__PreSignedUrlExpiryInMinutes=${CLOUDFLARER2__PreSignedUrlExpiryInMinutes:-30}
                       CONNECTIONSTRINGS__PostgreSQLConnection=${CONNECTIONSTRINGS__PostgreSQLConnection:-Host=db;Port=5432;Database=${POSTGRES_DB:-qxihr};Username=${POSTGRES_USER:-qxihr};Password=${POSTGRES_PASSWORD:-changeMe};}
                       VITE_API_BASE_URL=${VITE_API_BASE_URL}
+                      VITE_TINYMCE_API_KEY=${VITE_TINYMCE_API_KEY}
                       EOF
 
                       # Compose deploy using an isolated project name to avoid touching other stacks

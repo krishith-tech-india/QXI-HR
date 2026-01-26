@@ -19,6 +19,7 @@ const SubmitCvForm = () => {
   const { toast } = useToast();
   const [skills, setSkills] = useState([]);
   const [isLoadingSkills, setIsLoadingSkills] = useState(false);
+  const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
   useEffect(() => {
     const fetchSkills = async () => {
@@ -27,7 +28,7 @@ const SubmitCvForm = () => {
         const response = await fetch(API_ENDPOINTS.getSkills, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ page: 1, pageSize: 500, sortBy: 'name' })
+          body: JSON.stringify({ page: 1, pageSize: 99, sortBy: 'name' })
         });
         const result = await response.json();
         if (result.isSuccess) {
@@ -49,6 +50,15 @@ const SubmitCvForm = () => {
       toast({
         title: "Error",
         description: "Please fill in all required fields.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!isValidEmail(cvData.email)) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a valid email address.",
         variant: "destructive"
       });
       return;

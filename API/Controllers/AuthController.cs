@@ -36,7 +36,7 @@ namespace API.Controllers
                 return StatusCode(StatusCodes.Status401Unauthorized, Response<AuthRespDto>.Failure(new Error("StatusCode", "Roles are not assigned to user."), StatusCodes.Status401Unauthorized));
 
             var displayName = string.Join(" ", new[] { user.FirstName, user.LastName }.Where(value => !string.IsNullOrWhiteSpace(value)));
-            var auth = _jwtService.GenerateToken(request.UsernameOrEmail, displayName, [..user.Roles.Select(x=> x.Role)]);
+            var auth = _jwtService.GenerateToken(request.UsernameOrEmail, displayName, user.ProfilePictureUrl, [..user.Roles.Select(x=> x.Role)]);
 
             return StatusCode(StatusCodes.Status200OK, Response<AuthRespDto>.Success(auth, 200));
         }
@@ -92,7 +92,7 @@ namespace API.Controllers
             var created = await _userService.CreateAsync(createDto);
             await _applicantProfileService.UpsertAsync(created.Id, request.Profile);
             var displayName = string.Join(" ", new[] { request.FirstName, request.LastName }.Where(value => !string.IsNullOrWhiteSpace(value)));
-            var auth = _jwtService.GenerateToken(created.Email ?? request.Email, displayName, Roles.Applicant);
+            var auth = _jwtService.GenerateToken(created.Email ?? request.Email, displayName, created.ProfilePictureUrl, Roles.Applicant);
 
             return StatusCode(StatusCodes.Status201Created, Response<AuthRespDto>.Success(auth, StatusCodes.Status201Created));
         }

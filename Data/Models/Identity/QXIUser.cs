@@ -30,9 +30,6 @@ namespace Data.Models
         [StringLength(1000), DataType(DataType.MultilineText)]
         public string? Bio { get; set; }
 
-        [StringLength(500), DataType(DataType.Url)]
-        public string? LinkedInProfileUrl { get; set; }
-
         [StringLength(50), DataType(DataType.Text)]
         [Unicode(false)]
         public string? Position { get; set; }
@@ -44,9 +41,14 @@ namespace Data.Models
         [StringLength(50)]
         public string Password { get; set; } = null!;
 
+        [StringLength(100)]
+        [Unicode(false)]
+        public string UserCode { get; set; } = string.Empty;
+
         public bool IsPublic { get; set; } = true;
 
         public virtual ApplicantProfile? ApplicantProfile { get; set; }
+        public virtual ICollection<ApplicantOnlineProfile> OnlineProfiles { get; set; } = new List<ApplicantOnlineProfile>();
         public virtual ICollection<QXIUserRole> UserRoles { get; set; } = [];
         public virtual ICollection<ApplicantSkill> ApplicantSkills { get; set; } = new List<ApplicantSkill>();
         public virtual ICollection<JobApplication> JobApplications { get; set; } = new List<JobApplication>();

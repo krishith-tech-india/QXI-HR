@@ -28,7 +28,7 @@ const Clients = () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     page: 1,
-                    pageSize: 100,
+                    pageSize: 99,
                     isDescending: true,
                 }),
             });

@@ -23,6 +23,5 @@ namespace Core.DTOs
         public string Password { get; set; } = null!;
         public string? ProfilePictureUrl { get; set; }
         public string? Bio { get; set; }
-        public string? LinkedInProfileUrl { get; set; }
     }
 }

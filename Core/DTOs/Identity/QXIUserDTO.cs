@@ -7,16 +7,17 @@ namespace Core.DTOs
         public string FirstName { get; set; } = null!;
         public string? LastName { get; set; }
         public string? Bio { get; set; }
-        public string? LinkedInProfileUrl { get; set; }
         public string PhoneNumber { get; set; } = null!;
         public string? Position { get; set; }
         public string? ProfilePictureUrl { get; set; }
         public string? Password { get; set; }
+        public string? UserCode { get; set; }
         public bool IsPublic { get; set; } = true;
         public bool IsActive { get; set; }
         public ICollection<int>? RoleIds { get; set; }
         public ICollection<QXIRoleDTO>? Roles { get; set; }
         public ICollection<int>? SkillIds { get; set; }
         public ICollection<SkillDTO>? Skills { get; set; }
+        public ICollection<ApplicantOnlineProfileDto>? OnlineProfiles { get; set; }
     }
 }

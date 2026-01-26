@@ -2,7 +2,7 @@ using Core.DTOs;
 
 namespace Infrastructure.Services
 {
-    public interface IRoleService : IEntityCrudService<QXIRoleDTO>
+    public interface IRoleService : IEntityCrudService<QXIRoleDTO, int>
     {
     }
 }

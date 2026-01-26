@@ -64,7 +64,6 @@ namespace Data.Models
         public virtual ICollection<ApplicantEmployment> Employments { get; set; } = new List<ApplicantEmployment>();
         public virtual ICollection<ApplicantEducation> Educations { get; set; } = new List<ApplicantEducation>();
         public virtual ICollection<ApplicantProject> Projects { get; set; } = new List<ApplicantProject>();
-        public virtual ICollection<ApplicantOnlineProfile> OnlineProfiles { get; set; } = new List<ApplicantOnlineProfile>();
         public virtual ICollection<ApplicantCertification> Certifications { get; set; } = new List<ApplicantCertification>();
         public virtual ICollection<ApplicantLanguage> Languages { get; set; } = new List<ApplicantLanguage>();
 

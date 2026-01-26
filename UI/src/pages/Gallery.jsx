@@ -51,7 +51,7 @@ const CategoryManagement = ({ onCategoryUpdate }) => {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${sessionStorage.getItem("token")}`,
                 },
-                body: JSON.stringify({ page: 1, pageSize: 100 }),
+                body: JSON.stringify({ page: 1, pageSize: 99 }),
             });
             const result = await response.json();
             if (result.isSuccess) setCategories(result.data);
@@ -403,7 +403,7 @@ const Gallery = () => {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${sessionStorage.getItem("token")}`,
                 },
-                body: JSON.stringify({ page: 1, pageSize: 100 }),
+                body: JSON.stringify({ page: 1, pageSize: 99 }),
             });
             const result = await response.json();
             if (result.isSuccess) {

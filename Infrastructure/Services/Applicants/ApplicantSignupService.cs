@@ -56,7 +56,7 @@ namespace Infrastructure.Services
 
             var existsActive = await _dbContext.Users
                 .IgnoreQueryFilters()
-                .AnyAsync(u => u.IsActive && (EF.Functions.ILike(u.Email, email) || u.PhoneNumber == phone));
+                .AnyAsync(u => u.IsActive && EF.Functions.ILike(u.Email, email));
 
             if (existsActive)
             {
@@ -111,10 +111,12 @@ namespace Infrastructure.Services
                 .Include(p => p.Projects)
                 .Include(p => p.Certifications)
                 .Include(p => p.Languages)
-                .Include(p => p.OnlineProfiles)
                 .FirstOrDefaultAsync(p => p.UserId == user.Id);
 
             var currentStep = await ResolveCurrentStepAsync(user.Id);
+            var onlineProfiles = await _dbContext.ApplicantOnlineProfiles
+                .Where(p => p.UserId == user.Id)
+                .ToListAsync();
 
             return new ApplicantSignupDraftDto
             {
@@ -144,7 +146,7 @@ namespace Infrastructure.Services
                 Projects = profile?.Projects?.Adapt<List<ApplicantProjectDto>>(),
                 Certifications = profile?.Certifications?.Adapt<List<ApplicantCertificationDto>>(),
                 Languages = profile?.Languages?.Adapt<List<ApplicantLanguageDto>>(),
-                OnlineProfiles = profile?.OnlineProfiles?.Adapt<List<ApplicantOnlineProfileDto>>(),
+                OnlineProfiles = onlineProfiles.Adapt<List<ApplicantOnlineProfileDto>>(),
             };
         }
 
@@ -187,11 +189,39 @@ namespace Infrastructure.Services
 
             if (dto.SkillIds != null)
             {
-                user.ApplicantSkills = dto.SkillIds
+                var normalizedSkillIds = dto.SkillIds
                     .Where(id => id > 0)
                     .Distinct()
-                    .Select(skillId => new ApplicantSkill { UserId = user.Id, SkillId = skillId, IsActive = true })
                     .ToList();
+
+                user.ApplicantSkills ??= new List<ApplicantSkill>();
+
+                var existingSkills = user.ApplicantSkills.ToList();
+                foreach (var existing in existingSkills)
+                {
+                    if (!normalizedSkillIds.Contains(existing.SkillId))
+                    {
+                        user.ApplicantSkills.Remove(existing);
+                    }
+                }
+
+                foreach (var skillId in normalizedSkillIds)
+                {
+                    var current = user.ApplicantSkills.FirstOrDefault(s => s.SkillId == skillId);
+                    if (current == null)
+                    {
+                        user.ApplicantSkills.Add(new ApplicantSkill
+                        {
+                            UserId = user.Id,
+                            SkillId = skillId,
+                            IsActive = true
+                        });
+                    }
+                    else
+                    {
+                        current.IsActive = true;
+                    }
+                }
             }
 
             await _dbContext.SaveChangesAsync();
@@ -322,15 +352,24 @@ namespace Infrastructure.Services
                 })
                 .ToList();
 
-            profile.OnlineProfiles = (dto.OnlineProfiles ?? new List<ApplicantOnlineProfileDto>())
-                .Select(x => x.Adapt<ApplicantOnlineProfile>())
-                .Select(x =>
+            var sanitizedProfiles = (dto.OnlineProfiles ?? new List<ApplicantOnlineProfileDto>())
+                .Where(p => !string.IsNullOrWhiteSpace(p.Platform) && !string.IsNullOrWhiteSpace(p.Url))
+                .Select(x => new ApplicantOnlineProfile
                 {
-                    x.Id = 0;
-                    x.UserId = user.Id;
-                    return x;
+                    UserId = user.Id,
+                    Platform = x.Platform.Trim(),
+                    Url = x.Url.Trim()
                 })
                 .ToList();
+
+            if (sanitizedProfiles.Count > 0)
+            {
+                _onlineProfileRepo.InsertRange(sanitizedProfiles);
+            }
+
+            // Repository deletes clear change tracker, so reattach updated entities
+            _dbContext.Users.Update(user);
+            _dbContext.ApplicantProfiles.Update(profile);
 
             await _dbContext.SaveChangesAsync();
 
@@ -350,17 +389,18 @@ namespace Infrastructure.Services
         {
             var user = await _dbContext.Users.IgnoreQueryFilters()
                 .Include(u => u.ApplicantSkills)
+                .Include(u => u.UserRoles)
                 .FirstOrDefaultAsync(u => EF.Functions.ILike(u.Email, email));
+
+            var applicantRole = await _roleRepo.Query(r => r.RoleName == Roles.Applicant.ToString(), true)
+                .FirstOrDefaultAsync();
+            if (applicantRole == null)
+            {
+                throw new InvalidOperationException("Applicant role not found.");
+            }
 
             if (user == null)
             {
-                var role = await _roleRepo.Query(r => r.RoleName == Roles.Applicant.ToString(), true)
-                    .FirstOrDefaultAsync();
-                if (role == null)
-                {
-                    throw new InvalidOperationException("Applicant role not found.");
-                }
-
                 user = new QXIUser
                 {
                     FirstName = "Applicant",
@@ -378,12 +418,40 @@ namespace Infrastructure.Services
                 var userRole = new QXIUserRole
                 {
                     UserId = user.Id,
-                    RoleId = role.Id,
+                    RoleId = applicantRole.Id,
                     IsActive = true
                 };
 
                 _userRoleRepo.Insert(userRole);
                 await _userRoleRepo.SaveChangesAsync();
+
+                if (string.IsNullOrWhiteSpace(user.UserCode))
+                {
+                    user.UserCode = await UserCodeGenerator.NextCodeAsync(_dbContext, new[] { applicantRole.RoleName });
+                    _dbContext.Users.Update(user);
+                    await _dbContext.SaveChangesAsync();
+                }
+            }
+            else
+            {
+                var existingApplicantRole = user.UserRoles.FirstOrDefault(ur => ur.RoleId == applicantRole.Id);
+                if (existingApplicantRole == null)
+                {
+                    var userRole = new QXIUserRole
+                    {
+                        UserId = user.Id,
+                        RoleId = applicantRole.Id,
+                        IsActive = true
+                    };
+                    _userRoleRepo.Insert(userRole);
+                    await _userRoleRepo.SaveChangesAsync();
+                }
+                else if (!existingApplicantRole.IsActive)
+                {
+                    existingApplicantRole.IsActive = true;
+                    _userRoleRepo.Update(existingApplicantRole);
+                    await _userRoleRepo.SaveChangesAsync();
+                }
             }
 
             var profile = await _dbContext.ApplicantProfiles
@@ -392,7 +460,6 @@ namespace Infrastructure.Services
                 .Include(p => p.Projects)
                 .Include(p => p.Certifications)
                 .Include(p => p.Languages)
-                .Include(p => p.OnlineProfiles)
                 .FirstOrDefaultAsync(p => p.UserId == user.Id);
 
             if (profile == null)

@@ -89,7 +89,7 @@ namespace Data.DbContexts
                       .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasIndex(e => e.Email).IsUnique(true).HasDatabaseName("UQ_Users_Email").HasFilter(isActiveFilter);
-                entity.HasIndex(e => e.PhoneNumber).IsUnique(true).HasDatabaseName("UQ_Users_PhoneNumber").HasFilter(isActiveFilter);
+                entity.HasIndex(e => e.UserCode).IsUnique(true).HasDatabaseName("UQ_Users_UserCode");
             });
 
             modelBuilder.Entity<QXIRole>(entity =>
@@ -137,6 +137,9 @@ namespace Data.DbContexts
             modelBuilder.Entity<JobPost>(entity =>
             {
                 entity.HasKey(e => e.Id);
+                entity.Property(e => e.JobCode)
+                    .HasDefaultValueSql("('QXIJB-' || lpad(nextval('\"JobCodeSequence\"')::text, 3, '0'))")
+                    .ValueGeneratedOnAdd();
 
                 entity.HasMany(jp => jp.Applications)
                     .WithOne(ja => ja.JobPost)
@@ -240,8 +243,8 @@ namespace Data.DbContexts
             modelBuilder.Entity<ApplicantOnlineProfile>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.HasOne(e => e.Profile)
-                      .WithMany(p => p.OnlineProfiles)
+                entity.HasOne(e => e.User)
+                      .WithMany(u => u.OnlineProfiles)
                       .HasForeignKey(e => e.UserId)
                       .OnDelete(DeleteBehavior.Cascade);
             });

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { API_ENDPOINTS } from '@/config/apiConfig';
 import SkillMultiSelect from '@/components/SkillMultiSelect';
+import RichTextEditor from '@/components/RichTextEditor';
 
 const JobModal = ({ isOpen, onClose, onSubmit, job }) => {
   const [formData, setFormData] = useState({
@@ -17,6 +18,7 @@ const JobModal = ({ isOpen, onClose, onSubmit, job }) => {
     skils: '',
     salary: '',
     experience: '',
+    recruiterWhatsAppNumber: '',
     skillIds: []
   });
   const [skills, setSkills] = useState([]);
@@ -36,6 +38,7 @@ const JobModal = ({ isOpen, onClose, onSubmit, job }) => {
         skils: job.skils || '',
         salary: job.salary || '',
         experience: job.experience || '',
+        recruiterWhatsAppNumber: job.recruiterWhatsAppNumber || '',
         skillIds: jobSkillIds || []
       });
     } else {
@@ -47,6 +50,7 @@ const JobModal = ({ isOpen, onClose, onSubmit, job }) => {
         skils: '',
         salary: '',
         experience: '',
+        recruiterWhatsAppNumber: '',
         skillIds: []
       });
     }
@@ -59,7 +63,7 @@ const JobModal = ({ isOpen, onClose, onSubmit, job }) => {
       const response = await fetch(API_ENDPOINTS.getSkills, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ page: 1, pageSize: 500, sortBy: 'name' })
+        body: JSON.stringify({ page: 1, pageSize: 99, sortBy: 'name' })
       });
       const result = await response.json();
       if (result.isSuccess) {
@@ -82,6 +86,8 @@ const JobModal = ({ isOpen, onClose, onSubmit, job }) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
+
+  const stripHtml = (value) => value.replace(/<[^>]*>/g, '').trim();
 
   const handleSkillChange = (skillIds) => {
     setFormData(prev => ({ ...prev, skillIds }));
@@ -111,7 +117,7 @@ const JobModal = ({ isOpen, onClose, onSubmit, job }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.companyName || !formData.description) {
+    if (!formData.title || !stripHtml(formData.description)) {
       toast({ title: "Error", description: "Please fill in all required fields.", variant: "destructive" });
       return;
     }
@@ -135,10 +141,14 @@ const JobModal = ({ isOpen, onClose, onSubmit, job }) => {
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto max-h-[calc(90vh-140px)]">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InputField label="Title *" name="title" value={formData.title} onChange={handleChange} required />
-            <InputField label="Company Name *" name="companyName" value={formData.companyName} onChange={handleChange} required />
+            <div>
+              <InputField label="Company Name" name="companyName" value={formData.companyName} onChange={handleChange} />
+              <p className="text-xs text-gray-500 mt-1">Internal reference only (not visible to applicants).</p>
+            </div>
             <InputField label="Location" name="location" value={formData.location} onChange={handleChange} />
             <InputField label="Salary" name="salary" value={formData.salary} onChange={handleChange} />
             <InputField label="Experience" name="experience" value={formData.experience} onChange={handleChange} />
+            <InputField label="Recruiter WhatsApp Number" name="recruiterWhatsAppNumber" value={formData.recruiterWhatsAppNumber} onChange={handleChange} />
           </div>
           <SkillMultiSelect
             label="Skills"
@@ -150,7 +160,14 @@ const JobModal = ({ isOpen, onClose, onSubmit, job }) => {
           />
           <div>
             <Label htmlFor="description" className="font-medium text-gray-700">Description *</Label>
-            <textarea id="description" name="description" value={formData.description} onChange={handleChange} rows={5} className="mt-1 w-full flex min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm" required />
+            <div className="mt-2">
+              <RichTextEditor
+                value={formData.description}
+                onChange={(value) =>
+                  setFormData((prev) => ({ ...prev, description: value }))
+                }
+              />
+            </div>
           </div>
           <div className="flex justify-end space-x-4 pt-4 border-t">
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>

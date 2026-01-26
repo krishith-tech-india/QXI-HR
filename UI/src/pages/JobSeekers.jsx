@@ -32,6 +32,7 @@ const JobSeekers = () => {
     const [searchKeyword, setSearchKeyword] = useState("");
     const [sortBy, setSortBy] = useState("title");
     const [isDescending, setIsDescending] = useState(false);
+    const [showInactive, setShowInactive] = useState(false);
     const [filters, setFilters] = useState({
         title: "",
         companyName: "",
@@ -54,6 +55,10 @@ const JobSeekers = () => {
             const activeFilters = Object.entries(debouncedFilters)
                 .filter(([, value]) => value)
                 .map(([fieldName, value]) => ({ fieldName, value }));
+
+            if (showInactive) {
+                activeFilters.push({ fieldName: "includeInactive", value: true });
+            }
 
             const response = await fetch(API_ENDPOINTS.getJobPosts, {
                 method: "POST",
@@ -99,6 +104,7 @@ const JobSeekers = () => {
         sortBy,
         isDescending,
         debouncedFilters,
+        showInactive,
         toast,
         showLoader,
         hideLoader,
@@ -134,7 +140,7 @@ const JobSeekers = () => {
 
     useEffect(() => {
         setPage(1);
-    }, [debouncedSearch, debouncedFilters, sortBy, isDescending]);
+    }, [debouncedSearch, debouncedFilters, sortBy, isDescending, showInactive]);
 
     const handleOpenModal = (job = null) => {
         setEditingJob(job);
@@ -188,9 +194,11 @@ const JobSeekers = () => {
     };
 
     const handleDelete = (jobId) => {
-        setConfirmMessage("Are you sure you want to delete this job post?");
+        setConfirmMessage(
+            "Are you sure you want to mark this job post inactive?"
+        );
         setPendingAction(() => () => {
-            handleApiCall("deleted", API_ENDPOINTS.deleteJobPost(jobId), {
+            handleApiCall("marked inactive", API_ENDPOINTS.deleteJobPost(jobId), {
                 method: "DELETE",
             });
         });
@@ -212,6 +220,7 @@ const JobSeekers = () => {
             const method = isEditing ? "PUT" : "POST";
             const body = {
                 ...formData,
+                ...(isEditing ? {} : { isActive: true }),
                 id: isEditing ? editingJob.id : undefined,
             };
 
@@ -278,6 +287,11 @@ const JobSeekers = () => {
                     ...filters,
                     onFilterChange: (newFilters) =>
                         setFilters((prev) => ({ ...prev, ...newFilters })),
+                }}
+                inactiveToggle={{
+                    visible: canManageJobs,
+                    value: showInactive,
+                    onToggle: () => setShowInactive((prev) => !prev),
                 }}
                 sorting={{
                     sortBy,

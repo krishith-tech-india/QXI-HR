@@ -146,16 +146,14 @@ namespace Data.Reopsitories
             {
                 dbSet.Attach(entity);
             }
-            dbContext.ChangeTracker.Clear();
             dbSet.Remove(entity);
         }
 
         /// <inheritdoc />
         public void DeleteRange(IEnumerable<TEntity> entities)
         {
-            if (entities != null || entities!.Any())
+            if (entities != null && entities.Any())
             {
-                dbContext.ChangeTracker.Clear();
                 dbSet.RemoveRange(entities!);
             }
         }

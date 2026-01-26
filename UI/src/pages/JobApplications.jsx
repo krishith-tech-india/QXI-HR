@@ -47,7 +47,10 @@ const JobPostRow = ({ job }) => {
         try {
             const token = sessionStorage.getItem("token");
             const response = await fetch(
-                API_ENDPOINTS.getApplicationsByJobId(job.id),
+                API_ENDPOINTS.getApplicationsByJobId(
+                    job.id,
+                    job.isActive === false
+                ),
                 {
                     headers: { Authorization: `Bearer ${token}` },
                 }
@@ -88,9 +91,16 @@ const JobPostRow = ({ job }) => {
                 className="w-full text-left p-4 bg-gray-50 hover:bg-gray-100 transition-colors duration-200 flex justify-between items-center"
             >
                 <div className="flex-grow">
-                    <h3 className="text-lg font-bold text-gray-800">
-                        {job.title}
-                    </h3>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-lg font-bold text-gray-800">
+                            {job.title}
+                        </h3>
+                        {job.isActive === false && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-700">
+                                Inactive
+                            </span>
+                        )}
+                    </div>
                     <p className="text-sm text-gray-600">{job.companyName}</p>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 mt-2">
                         {job.location && (
@@ -152,7 +162,7 @@ const JobPostRow = ({ job }) => {
     );
 };
 
-const FilterControls = ({ filters, sorting, skills }) => {
+const FilterControls = ({ filters, sorting, skills, inactiveToggle }) => {
     return (
         <div className="bg-gray-50 p-6 rounded-xl mb-12 border">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
@@ -264,21 +274,36 @@ const FilterControls = ({ filters, sorting, skills }) => {
                         )}
                     </Button>
                 </div>
-                <Button
-                    variant="ghost"
-                    onClick={() => {
-                        filters.onSearchChange("");
-                        filters.onFilterChange({
-                            title: "",
-                            companyName: "",
-                            location: "",
-                            skillId: "",
-                        });
-                    }}
-                >
-                    <X className="w-4 h-4 mr-2" />
-                    Clear Filters
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                    {inactiveToggle?.visible && (
+                        <Button
+                            type="button"
+                            variant={
+                                inactiveToggle.value ? "default" : "outline"
+                            }
+                            onClick={inactiveToggle.onToggle}
+                        >
+                            {inactiveToggle.value
+                                ? "Showing Inactive"
+                                : "Show Inactive"}
+                        </Button>
+                    )}
+                    <Button
+                        variant="ghost"
+                        onClick={() => {
+                            filters.onSearchChange("");
+                            filters.onFilterChange({
+                                title: "",
+                                companyName: "",
+                                location: "",
+                                skillId: "",
+                            });
+                        }}
+                    >
+                        <X className="w-4 h-4 mr-2" />
+                        Clear Filters
+                    </Button>
+                </div>
             </div>
         </div>
     );
@@ -299,6 +324,8 @@ const JobApplications = () => {
     const [searchKeyword, setSearchKeyword] = useState("");
     const [sortBy, setSortBy] = useState("title");
     const [isDescending, setIsDescending] = useState(false);
+    const [showInactive, setShowInactive] = useState(false);
+    const [userRole, setUserRole] = useState(null);
 
     const debouncedSearch = useDebounce(searchKeyword, 500);
     const debouncedFilters = useDebounce(filters, 500);
@@ -328,6 +355,13 @@ const JobApplications = () => {
                 const activeFilters = Object.entries(debouncedFilters)
                     .filter(([, value]) => value)
                     .map(([fieldName, value]) => ({ fieldName, value }));
+
+                if (showInactive && (role === "Admin" || role === "Staff")) {
+                    activeFilters.push({
+                        fieldName: "includeInactive",
+                        value: true,
+                    });
+                }
 
                 const response = await fetch(API_ENDPOINTS.getJobPosts, {
                     method: "POST",
@@ -375,12 +409,21 @@ const JobApplications = () => {
             debouncedFilters,
             sortBy,
             isDescending,
+            showInactive,
         ]
     );
 
     useEffect(() => {
         fetchAllJobPosts(1);
     }, [fetchAllJobPosts]);
+
+    useEffect(() => {
+        const role = sessionStorage.getItem("role");
+        setUserRole(role);
+        if (role !== "Admin" && role !== "Staff") {
+            setShowInactive(false);
+        }
+    }, []);
 
     useEffect(() => {
         const fetchSkills = async () => {
@@ -403,7 +446,7 @@ const JobApplications = () => {
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [debouncedSearch, debouncedFilters, sortBy, isDescending]);
+    }, [debouncedSearch, debouncedFilters, sortBy, isDescending, showInactive]);
 
     const handlePageChange = (newPage) => {
         if (
@@ -419,6 +462,7 @@ const JobApplications = () => {
     };
 
     const totalPages = Math.ceil(totalItems / (JOB_PAGE_SIZE || 10));
+    const canManageJobs = userRole === "Admin" || userRole === "Staff";
 
     return (
         <>
@@ -449,6 +493,12 @@ const JobApplications = () => {
                             searchKeyword: searchKeyword,
                             onSearchChange: setSearchKeyword,
                             onFilterChange: handleFilterChange,
+                        }}
+                        inactiveToggle={{
+                            visible: canManageJobs,
+                            value: showInactive,
+                            onToggle: () =>
+                                setShowInactive((prev) => !prev),
                         }}
                         sorting={{
                             sortBy: sortBy,

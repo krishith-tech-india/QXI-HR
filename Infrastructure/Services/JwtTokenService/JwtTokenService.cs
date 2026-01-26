@@ -24,7 +24,7 @@ public class JwtTokenService: IJwtTokenService
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public AuthRespDto GenerateToken(string username, string? displayName, params Roles[] roles)
+    public AuthRespDto GenerateToken(string username, string? displayName, string? profilePictureUrl, params Roles[] roles)
     {
         var appSettings = _config.GetSection("AppSettings");
         var key = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(appSettings["SecurityKey"]!));
@@ -37,6 +37,11 @@ public class JwtTokenService: IJwtTokenService
         if (!string.IsNullOrWhiteSpace(displayName))
         {
             claims.Add(new Claim("name", displayName));
+        }
+
+        if (!string.IsNullOrWhiteSpace(profilePictureUrl))
+        {
+            claims.Add(new Claim("profilePictureUrl", profilePictureUrl));
         }
 
         foreach (var role in roles)

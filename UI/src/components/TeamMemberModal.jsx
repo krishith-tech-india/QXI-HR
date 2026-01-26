@@ -7,6 +7,50 @@ import { useToast } from '@/components/ui/use-toast';
 import { API_ENDPOINTS, JOB_PAGE_SIZE } from '@/config/apiConfig';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
+import Cropper from 'react-easy-crop';
+
+const createImage = (url) =>
+  new Promise((resolve, reject) => {
+    const image = new Image();
+    image.addEventListener('load', () => resolve(image));
+    image.addEventListener('error', (error) => reject(error));
+    image.setAttribute('crossOrigin', 'anonymous');
+    image.src = url;
+  });
+
+const getCroppedImage = async (imageSrc, pixelCrop, fileType) => {
+  const image = await createImage(imageSrc);
+  const canvas = document.createElement('canvas');
+  canvas.width = pixelCrop.width;
+  canvas.height = pixelCrop.height;
+  const ctx = canvas.getContext('2d');
+
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height
+  );
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          reject(new Error('Failed to crop image.'));
+          return;
+        }
+        resolve(blob);
+      },
+      fileType || 'image/jpeg',
+      0.92
+    );
+  });
+};
 
 const getInitialFormData = (member) => ({
   email: member?.email || '',
@@ -15,7 +59,10 @@ const getInitialFormData = (member) => ({
   firstName: member?.firstName || '',
   lastName: member?.lastName || '',
   bio: member?.bio || '',
-  linkedInProfileUrl: member?.linkedInProfileUrl || '',
+  onlineProfiles: Array.isArray(member?.onlineProfiles) ? member.onlineProfiles.map((profile) => ({
+    platform: profile?.platform || '',
+    url: profile?.url || ''
+  })) : [],
   phoneNumber: member?.phoneNumber?.replace('+91', '') || '',
   position: member?.position || '',
   profilePictureUrl: member?.profilePictureUrl || '',
@@ -23,6 +70,37 @@ const getInitialFormData = (member) => ({
   isPublic: member?.isPublic ?? true,
   roleIds: member?.roles?.map(r => r.id) || []
 });
+
+const ADMIN_PROFILE_PLATFORMS = [
+  "LinkedIn",
+  "Facebook",
+  "Instagram",
+  "YouTube"
+];
+
+const buildPlatformOptions = (currentValue, selectedPlatforms) => {
+  const normalized = currentValue?.trim();
+  const lowerSelected = new Set(
+    (selectedPlatforms || [])
+      .filter(Boolean)
+      .map((platform) => platform.toLowerCase())
+  );
+
+  const allowed = ADMIN_PROFILE_PLATFORMS.filter((platform) => {
+    const isCurrent = normalized && platform.toLowerCase() === normalized.toLowerCase();
+    if (isCurrent) return true;
+    return !lowerSelected.has(platform.toLowerCase());
+  });
+
+  if (normalized && !ADMIN_PROFILE_PLATFORMS.some((platform) => platform.toLowerCase() === normalized.toLowerCase())) {
+    return [
+      { value: normalized, label: `Other (${normalized})` },
+      ...allowed.map((platform) => ({ value: platform, label: platform }))
+    ];
+  }
+
+  return allowed.map((platform) => ({ value: platform, label: platform }));
+};
 
 const resolveImage = (url) => {
   if (!url) return null;
@@ -41,6 +119,15 @@ const TeamMemberModal = ({ isOpen, onClose, onSubmit, member }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [otp, setOtp] = useState('');
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
+  const [isCropOpen, setIsCropOpen] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState('');
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [pendingImageMeta, setPendingImageMeta] = useState({
+    name: 'profile-photo.jpg',
+    type: 'image/jpeg'
+  });
 
   const { toast } = useToast();
 
@@ -50,6 +137,12 @@ const TeamMemberModal = ({ isOpen, onClose, onSubmit, member }) => {
     setShowPassword(false);
     setOtp('');
     setIsOtpModalOpen(false);
+    setIsCropOpen(false);
+    setCropImageSrc('');
+    setCroppedAreaPixels(null);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setPendingImageMeta({ name: 'profile-photo.jpg', type: 'image/jpeg' });
   }, [member]);
 
   useEffect(() => {
@@ -92,9 +185,66 @@ const TeamMemberModal = ({ isOpen, onClose, onSubmit, member }) => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData(prev => ({ ...prev, profilePictureFile: file, profilePictureUrl: URL.createObjectURL(file) }));
+      const reader = new FileReader();
+      reader.onload = () => {
+        setPendingImageMeta({ name: file.name, type: file.type || 'image/jpeg' });
+        setCropImageSrc(reader.result);
+        setCrop({ x: 0, y: 0 });
+        setZoom(1);
+        setIsCropOpen(true);
+      };
+      reader.readAsDataURL(file);
     }
   };
+
+  const onCropComplete = useCallback((_, areaPixels) => {
+    setCroppedAreaPixels(areaPixels);
+  }, []);
+
+  const applyCroppedImage = useCallback(async () => {
+    if (!cropImageSrc || !croppedAreaPixels) {
+      toast({
+        title: 'Crop image',
+        description: 'Please adjust the crop area before saving.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      const blob = await getCroppedImage(
+        cropImageSrc,
+        croppedAreaPixels,
+        pendingImageMeta.type
+      );
+      const fileType = pendingImageMeta.type || 'image/jpeg';
+      const fileName = pendingImageMeta.name || 'profile-photo.jpg';
+      const croppedFile = new File([blob], fileName, { type: fileType });
+
+      setFormData(prev => ({
+        ...prev,
+        profilePictureFile: croppedFile,
+        profilePictureUrl: URL.createObjectURL(croppedFile)
+      }));
+      setIsCropOpen(false);
+      setCropImageSrc('');
+      setCroppedAreaPixels(null);
+    } catch (error) {
+      toast({
+        title: 'Crop failed',
+        description: 'Unable to crop the selected image.',
+        variant: 'destructive'
+      });
+    }
+  }, [cropImageSrc, croppedAreaPixels, pendingImageMeta, toast]);
+
+  const closeCropper = useCallback(() => {
+    setIsCropOpen(false);
+    setCropImageSrc('');
+    setCroppedAreaPixels(null);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+  }, []);
   
   const handleUnlockPassword = async () => {
     if (!formData.email) {
@@ -179,7 +329,18 @@ const TeamMemberModal = ({ isOpen, onClose, onSubmit, member }) => {
         return;
     }
 
-    const dataToSubmit = { ...formData, phoneNumber: `+91${formData.phoneNumber}` };
+    const cleanedProfiles = (formData.onlineProfiles || [])
+      .map((profile) => ({
+        platform: profile?.platform?.trim() || '',
+        url: profile?.url?.trim() || ''
+      }))
+      .filter((profile) => profile.platform && profile.url);
+
+    const dataToSubmit = {
+      ...formData,
+      phoneNumber: `+91${formData.phoneNumber}`,
+      onlineProfiles: cleanedProfiles
+    };
     if (!isPasswordUnlocked && member) {
       delete dataToSubmit.password;
       delete dataToSubmit.confirmPassword;
@@ -222,7 +383,79 @@ const TeamMemberModal = ({ isOpen, onClose, onSubmit, member }) => {
                 </div>
             </div>
             <InputField label="Position" name="position" value={formData.position} onChange={(e) => setFormData({ ...formData, position: e.target.value })} />
-            <InputField label="LinkedIn Profile" name="linkedin" type="url" value={formData.linkedInProfileUrl} onChange={(e) => setFormData({ ...formData, linkedInProfileUrl: e.target.value })} />
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-gray-700">Online Profiles</label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    onlineProfiles: [...(prev.onlineProfiles || []), { platform: '', url: '' }]
+                  }))
+                }
+              >
+                Add Profile
+              </Button>
+            </div>
+            {(formData.onlineProfiles || []).length === 0 ? (
+              <p className="text-sm text-gray-500">No online profiles added yet.</p>
+            ) : (
+              (formData.onlineProfiles || []).map((profile, index) => {
+                const selectedPlatforms = (formData.onlineProfiles || [])
+                  .map((item, itemIndex) =>
+                    itemIndex === index ? null : item?.platform?.trim()
+                  )
+                  .filter(Boolean);
+                return (
+                <div key={`profile-${index}`} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Platform</label>
+                    <select
+                      value={profile.platform}
+                      onChange={(e) => {
+                        const updated = [...(formData.onlineProfiles || [])];
+                        updated[index] = { ...updated[index], platform: e.target.value };
+                        setFormData({ ...formData, onlineProfiles: updated });
+                      }}
+                      className="custom-input"
+                    >
+                      <option value="" disabled>Select platform</option>
+                      {buildPlatformOptions(profile.platform, selectedPlatforms).map((option) => (
+                        <option key={`${option.value}-${index}`} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <InputField
+                    label="URL"
+                    type="url"
+                    value={profile.url}
+                    onChange={(e) => {
+                      const updated = [...(formData.onlineProfiles || [])];
+                      updated[index] = { ...updated[index], url: e.target.value };
+                      setFormData({ ...formData, onlineProfiles: updated });
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      const updated = [...(formData.onlineProfiles || [])];
+                      updated.splice(index, 1);
+                      setFormData({ ...formData, onlineProfiles: updated });
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              );
+              })
+            )}
           </div>
           <div className="flex items-start space-x-3">
             <input
@@ -297,6 +530,17 @@ const TeamMemberModal = ({ isOpen, onClose, onSubmit, member }) => {
         </div>
        </div>
     )}
+    <CropperDialog
+      isOpen={isCropOpen}
+      imageSrc={cropImageSrc}
+      crop={crop}
+      zoom={zoom}
+      onCropChange={setCrop}
+      onZoomChange={setZoom}
+      onCropComplete={onCropComplete}
+      onCancel={closeCropper}
+      onSave={applyCroppedImage}
+    />
     </>
   );
 };
@@ -306,6 +550,62 @@ const InputField = ({ label, ...props }) => (
     {label && <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
     <input {...props} className="custom-input" />
   </div>
+);
+
+const CropperDialog = ({
+  isOpen,
+  imageSrc,
+  crop,
+  zoom,
+  onCropChange,
+  onZoomChange,
+  onCropComplete,
+  onCancel,
+  onSave
+}) => (
+  <AlertDialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
+    <AlertDialogContent className="max-w-3xl">
+      <AlertDialogHeader>
+        <AlertDialogTitle>Crop profile photo</AlertDialogTitle>
+        <AlertDialogDescription>
+          Adjust the crop area and zoom before saving.
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <div className="space-y-4">
+        <div className="relative h-80 w-full overflow-hidden rounded-xl bg-slate-950">
+          {imageSrc ? (
+            <Cropper
+              image={imageSrc}
+              crop={crop}
+              zoom={zoom}
+              aspect={1}
+              cropShape="round"
+              showGrid={false}
+              onCropChange={onCropChange}
+              onZoomChange={onZoomChange}
+              onCropComplete={onCropComplete}
+            />
+          ) : null}
+        </div>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-gray-600">Zoom</span>
+          <input
+            type="range"
+            min="1"
+            max="3"
+            step="0.05"
+            value={zoom}
+            onChange={(e) => onZoomChange(Number(e.target.value))}
+            className="w-full"
+          />
+        </div>
+      </div>
+      <AlertDialogFooter>
+        <AlertDialogCancel onClick={onCancel}>Cancel</AlertDialogCancel>
+        <AlertDialogAction onClick={onSave}>Save crop</AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
 );
 
 export default TeamMemberModal;

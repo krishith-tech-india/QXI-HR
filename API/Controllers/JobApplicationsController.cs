@@ -35,7 +35,7 @@ namespace API.Controllers
 
             return StatusCode(StatusCodes.Status200OK, Response<object>.Success(null, StatusCodes.Status200OK));
         }
-        
+
         [HttpPost]
         public async Task<IActionResult> SendEMailContactMessage(MailContactMessageDto messageDto)
         {
@@ -74,9 +74,9 @@ namespace API.Controllers
         }
 
         [HttpGet("ByJob/{jobPostId:int}")]
-        public async Task<IActionResult> GetByJobPost(int jobPostId)
+        public async Task<IActionResult> GetByJobPost(int jobPostId, [FromQuery] bool includeInactive = false)
         {
-            var list = await _service.GetByJobPostIdAsync(jobPostId);
+            var list = await _service.GetByJobPostIdAsync(jobPostId, includeInactive);
             return StatusCode(StatusCodes.Status200OK, Response<IEnumerable<JobApplicationDTO>>.Success(list, StatusCodes.Status200OK));
         }
 
@@ -171,7 +171,7 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Applicant")]
+        [Authorize(Roles = "Admin,Applicant")]
         public async Task<IActionResult> GetUploadUrl(string filename)
         {
             if (string.IsNullOrWhiteSpace(filename))
@@ -209,8 +209,8 @@ namespace API.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return StatusCode(StatusCodes.Status400BadRequest, 
-                    Response<bool>.Failure(new Error("BadRequest", "Invalid request. Email and verification code are required."), 
+                return StatusCode(StatusCodes.Status400BadRequest,
+                    Response<bool>.Failure(new Error("BadRequest", "Invalid request. Email and verification code are required."),
                     StatusCodes.Status400BadRequest));
             }
 

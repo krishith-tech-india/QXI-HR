@@ -5,11 +5,13 @@ import { useToast } from '@/components/ui/use-toast';
 import { Plus, Trash2 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/apiConfig';
 import SkillMultiSelect from '@/components/SkillMultiSelect';
+import { DatePicker } from '@/components/ui/date-picker';
 
 const SignupForm = () => {
   const { toast } = useToast();
   const [skills, setSkills] = useState([]);
   const [isLoadingSkills, setIsLoadingSkills] = useState(false);
+  const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -29,8 +31,18 @@ const SignupForm = () => {
     otherInfo: ''
   });
 
+  const sanitizePhoneInput = (value) => {
+    const digits = String(value || '').replace(/\D/g, '');
+    if (!digits) return '';
+    return digits.length > 10 ? digits.slice(-10) : digits;
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'phone') {
+      setFormData(prev => ({ ...prev, [name]: sanitizePhoneInput(value) }));
+      return;
+    }
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -41,7 +53,7 @@ const SignupForm = () => {
         const response = await fetch(API_ENDPOINTS.getSkills, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ page: 1, pageSize: 500, sortBy: 'name' })
+          body: JSON.stringify({ page: 1, pageSize: 99, sortBy: 'name' })
         });
         const result = await response.json();
         if (result.isSuccess) {
@@ -88,12 +100,22 @@ const SignupForm = () => {
       return;
     }
 
+    if (!isValidEmail(formData.email)) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a valid email address.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const signups = JSON.parse(localStorage.getItem('candidateSignups') || '[]');
     const selectedSkillNames = skills
       .filter((skill) => formData.skillIds.includes(skill.id))
       .map((skill) => skill.name);
     const newSignup = {
       ...formData,
+      phone: formData.phone ? `+91${formData.phone}` : '',
       skills: selectedSkillNames.join(', '),
       id: Date.now(),
       submittedAt: new Date().toISOString()
@@ -138,7 +160,21 @@ const SignupForm = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <InputField name="fullName" label="Full Name *" value={formData.fullName} onChange={handleInputChange} required />
                 <InputField name="email" label="Email Address *" type="email" value={formData.email} onChange={handleInputChange} required />
-                <InputField name="phone" label="Phone Number" type="tel" value={formData.phone} onChange={handleInputChange} />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                  <div className="flex">
+                    <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">+91</span>
+                    <input
+                      name="phone"
+                      type="number"
+                      inputMode="numeric"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className="custom-input rounded-l-none"
+                      placeholder="Enter phone number"
+                    />
+                  </div>
+                </div>
                 <InputField name="dob" label="Date of Birth" type="date" value={formData.dob} onChange={handleInputChange} />
               </div>
               <div>
@@ -218,10 +254,14 @@ const SignupForm = () => {
   );
 };
 
-const InputField = ({ label, ...props }) => (
+const InputField = ({ label, type, ...props }) => (
   <div>
     <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
-    <input {...props} className="custom-input" />
+    {type === 'date' ? (
+      <DatePicker {...props} className="custom-input" />
+    ) : (
+      <input type={type} {...props} className="custom-input" />
+    )}
   </div>
 );
 

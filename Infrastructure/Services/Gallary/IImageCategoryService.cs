@@ -2,7 +2,7 @@ using Core.DTOs;
 
 namespace Infrastructure.Services
 {
-    public interface IImageCategoryService : IEntityCrudService<ImageCategoryDTO>
+    public interface IImageCategoryService : IEntityCrudService<ImageCategoryDTO, int>
     {
     }
 }

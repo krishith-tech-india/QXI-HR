@@ -19,7 +19,10 @@ builder.Services.Configure<AppSettings>(appSettingsSection);
 var appSettings = appSettingsSection.Get<AppSettings>();
 
 // Add services to the container.
-string connectionString = builder.Configuration.GetConnectionString("PostgreSQLConnection") ?? string.Empty;
+var connectionStringName = builder.Environment.IsDevelopment()
+    ? "PostgreSQLLocalConnection"
+    : "PostgreSQLConnection";
+string connectionString = builder.Configuration.GetConnectionString(connectionStringName) ?? string.Empty;
 builder.Services.AddQXIDbContext(connectionString);
 
 builder.Services.AddRepositories();

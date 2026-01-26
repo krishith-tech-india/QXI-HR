@@ -19,7 +19,8 @@ namespace Infrastructure
             TypeAdapterConfig<QXIUser, QXIUserDTO>.NewConfig().PreserveReference(true)
                 .Map(dest => dest.Roles, source => source.UserRoles.Select(x => x.Role))
                 .Map(dest => dest.SkillIds, source => source.ApplicantSkills.Select(x => x.SkillId))
-                .Map(dest => dest.Skills, source => source.ApplicantSkills.Select(x => x.Skill));
+                .Map(dest => dest.Skills, source => source.ApplicantSkills.Select(x => x.Skill))
+                .Map(dest => dest.OnlineProfiles, source => source.OnlineProfiles);
             TypeAdapterConfig<QXIRole, QXIRoleDTO>.NewConfig().PreserveReference(true);
             TypeAdapterConfig<Skill, SkillDTO>.NewConfig().PreserveReference(true);
 
@@ -31,7 +32,8 @@ namespace Infrastructure
                 .Map(dest => dest.PhoneNumber, source => source.User.PhoneNumber)
                 .Map(dest => dest.IsPublic, source => source.User.IsPublic)
                 .Map(dest => dest.SkillIds, source => source.User.ApplicantSkills.Select(x => x.SkillId))
-                .Map(dest => dest.Skills, source => source.User.ApplicantSkills.Select(x => x.Skill));
+                .Map(dest => dest.Skills, source => source.User.ApplicantSkills.Select(x => x.Skill))
+                .Map(dest => dest.OnlineProfiles, source => source.User.OnlineProfiles);
             TypeAdapterConfig<ApplicantEmployment, ApplicantEmploymentDto>.NewConfig().PreserveReference(true);
             TypeAdapterConfig<ApplicantEducation, ApplicantEducationDto>.NewConfig().PreserveReference(true);
             TypeAdapterConfig<ApplicantProject, ApplicantProjectDto>.NewConfig().PreserveReference(true);

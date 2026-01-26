@@ -25,6 +25,8 @@ namespace Infrastructure.Services
         public async Task<JobPostDTO> CreateAsync(JobPostDTO dto)
         {
             var entity = dto.Adapt<JobPost>();
+            entity.JobCode = null!;
+            entity.IsActive = true;
             var skillIds = NormalizeSkillIds(dto.SkillIds);
             if (skillIds.Count > 0)
             {
@@ -49,7 +51,8 @@ namespace Infrastructure.Services
         public async Task<PagedResponse<JobPostDTO>> GetAllAsync(RequestParams requestParams)
         {
             Expression<Func<JobPost, object>> sort = x => x.Id; // Default sort
-            var (skillIds, remainingFilters) = ExtractSkillFilters(requestParams.Filters);
+            var (includeInactive, filtersWithoutInactive) = ExtractIncludeInactiveFilter(requestParams.Filters);
+            var (skillIds, remainingFilters) = ExtractSkillFilters(filtersWithoutInactive);
             Expression<Func<JobPost, bool>> filter = PredicateBuilder.BuildFilterExpression<JobPost>(remainingFilters);
             if (skillIds.Count > 0)
             {
@@ -72,25 +75,68 @@ namespace Infrastructure.Services
             if (!string.IsNullOrWhiteSpace(requestParams.SortBy))
             {
                 sort = PredicateBuilder.BuildSortExpression<JobPost>(requestParams.SortBy);
+                if (requestParams.SortBy.Equals(nameof(EntityBase.IsActive), StringComparison.OrdinalIgnoreCase))
+                {
+                    requestParams.IsDescending = true;
+                }
             }
 
-            (var total, var query) = await _repo.PagedQueryAsync(filter, sort, requestParams.Page, requestParams.PageSize, requestParams.IsDescending);
+            IQueryable<JobPost> query = _repo.GetAll(true);
+            if (includeInactive)
+            {
+                query = query.IgnoreQueryFilters();
+            }
+
+            if (filter != null)
+            {
+                query = query.Where(filter);
+            }
+
+            query = requestParams.IsDescending
+                ? query.OrderByDescending(sort)
+                : query.OrderBy(sort);
+
+            var total = await query.CountAsync();
+            query = query.Skip((requestParams.Page - 1) * requestParams.PageSize).Take(requestParams.PageSize);
             query = query.Include(j => j.JobPostSkills).ThenInclude(jps => jps.Skill);
 
             var list = await query.ToListAsync();
+            var dtos = list.Adapt<List<JobPostDTO>>();
+            foreach (var dto in dtos)
+            {
+                dto.CompanyName = null;
+            }
 
-            return PagedResponse<JobPostDTO>.Success(list.Adapt<List<JobPostDTO>>(), total, requestParams, StatusCodes.Status200OK);
+            return PagedResponse<JobPostDTO>.Success(dtos, total, requestParams, StatusCodes.Status200OK);
 
         }
 
         public async Task<JobPostDTO?> GetByIdAsync(int id)
         {
-            var e = await _repo.Query(j => j.Id == id, false)
+            return await GetByIdAsync(id, false);
+        }
+
+        public async Task<JobPostDTO?> GetByIdAsync(int id, bool includeInactive)
+        {
+            IQueryable<JobPost> query = _repo.GetAll(false);
+            if (includeInactive)
+            {
+                query = query.IgnoreQueryFilters();
+            }
+
+            var e = await query
+                .Where(j => j.Id == id)
                 .Include(j => j.Applications)
                 .Include(j => j.JobPostSkills)
                 .ThenInclude(jps => jps.Skill)
                 .FirstOrDefaultAsync();
-            return e?.Adapt<JobPostDTO>();
+
+            var dto = e?.Adapt<JobPostDTO>();
+            if (dto != null)
+            {
+                dto.CompanyName = null;
+            }
+            return dto;
         }
 
         public async Task<JobPostDTO?> UpdateAsync(int id, JobPostDTO dto)
@@ -105,13 +151,29 @@ namespace Infrastructure.Services
             e.Location = dto.Location;
             e.Salary = dto.Salary;
             e.Experience = dto.Experience;
+            e.RecruiterWhatsAppNumber = dto.RecruiterWhatsAppNumber;
 
             if (dto.SkillIds != null)
             {
                 var skillIds = NormalizeSkillIds(dto.SkillIds);
                 var existingSkillIds = await GetExistingSkillIdsAsync(skillIds);
-                e.JobPostSkills = existingSkillIds.Select(skillId => new JobPostSkill { JobPostId = e.Id, SkillId = skillId }).ToList();
-                e.Skils = existingSkillIds.Count > 0 ? await GetSkillNameListAsync(existingSkillIds) : string.Empty;
+                var desiredIds = new HashSet<int>(existingSkillIds);
+                var toRemove = e.JobPostSkills.Where(jps => !desiredIds.Contains(jps.SkillId)).ToList();
+                foreach (var item in toRemove)
+                {
+                    e.JobPostSkills.Remove(item);
+                }
+
+                var currentIds = e.JobPostSkills.Select(jps => jps.SkillId).ToHashSet();
+                foreach (var skillId in desiredIds)
+                {
+                    if (!currentIds.Contains(skillId))
+                    {
+                        e.JobPostSkills.Add(new JobPostSkill { JobPostId = e.Id, SkillId = skillId });
+                    }
+                }
+
+                e.Skils = desiredIds.Count > 0 ? await GetSkillNameListAsync(existingSkillIds) : string.Empty;
             }
             _repo.Update(e);
             await _repo.SaveChangesAsync();
@@ -196,6 +258,49 @@ namespace Infrastructure.Services
             }
 
             return (skillIds.Distinct().ToList(), remaining);
+        }
+
+        private static (bool includeInactive, List<CommonFilterParams>? remainingFilters) ExtractIncludeInactiveFilter(List<CommonFilterParams>? filters)
+        {
+            if (filters == null || filters.Count == 0)
+            {
+                return (false, filters);
+            }
+
+            var includeFilters = filters
+                .Where(f =>
+                    f.FieldName != null &&
+                    f.FieldName.Equals("includeInactive", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (includeFilters.Count == 0)
+            {
+                return (false, filters);
+            }
+
+            var includeInactive = false;
+            foreach (var includeFilter in includeFilters)
+            {
+                if (includeFilter.Value is bool boolValue)
+                {
+                    includeInactive = includeInactive || boolValue;
+                    continue;
+                }
+
+                if (includeFilter.Value != null &&
+                    bool.TryParse(includeFilter.Value.ToString(), out var parsed))
+                {
+                    includeInactive = includeInactive || parsed;
+                }
+            }
+
+            var remaining = filters
+                .Where(f =>
+                    f.FieldName == null ||
+                    !f.FieldName.Equals("includeInactive", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            return (includeInactive, remaining);
         }
 
         private static IEnumerable<int> ParseSkillIds(string? raw)

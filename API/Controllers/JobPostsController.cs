@@ -22,9 +22,9 @@ namespace API.Controllers
         }
 
         [HttpGet("{id:int}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById(int id, [FromQuery] bool includeInactive = false)
         {
-            var dto = await _service.GetByIdAsync(id);
+            var dto = await _service.GetByIdAsync(id, includeInactive);
             if (dto == null)
             {
                 return StatusCode(StatusCodes.Status400BadRequest, Response<JobPostDTO>.Failure(new Error("NotFound", "JobPost not found."), StatusCodes.Status400BadRequest));

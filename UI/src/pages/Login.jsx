@@ -16,10 +16,10 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
 
     if (!formData.email || !formData.password) {
       toast({
@@ -27,9 +27,19 @@ const Login = () => {
         description: 'Please fill in all fields.',
         variant: 'destructive',
       });
-      setLoading(false);
       return;
     }
+
+    if (!isValidEmail(formData.email)) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please enter a valid email address.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const response = await fetch(API_ENDPOINTS.login, {
@@ -48,6 +58,18 @@ const Login = () => {
       if (result.isSuccess && result.statusCode === 200) {
         sessionStorage.setItem('token', result.data.token);
         sessionStorage.setItem('role', result.data.role);
+        const derivedName = deriveDisplayName(result.data);
+        const derivedProfileImageUrl = deriveProfileImageUrl(result.data);
+        if (derivedName) {
+          sessionStorage.setItem('userName', derivedName);
+        } else {
+          sessionStorage.removeItem('userName');
+        }
+        if (derivedProfileImageUrl) {
+          sessionStorage.setItem('profileImageUrl', derivedProfileImageUrl);
+        } else {
+          sessionStorage.removeItem('profileImageUrl');
+        }
         toast({
           title: 'Success!',
           description: 'You have been successfully logged in.',
@@ -90,7 +112,7 @@ const Login = () => {
         <meta property="og:description" content="Secure login portal for QXI HR (OPC) PRIVATE LIMITED clients and candidates." />
       </Helmet>
 
-      <section className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 py-12 px-4 sm:px-6 lg:px-8">
+      <section className="relative flex-1 overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 py-12 px-4 sm:px-6 lg:px-8">
         <motion.div
           className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-gradient-to-br from-amber-400/30 to-orange-500/20 blur-3xl"
           animate={{ y: [0, 20, 0], x: [0, 12, 0] }}
@@ -231,6 +253,57 @@ const Login = () => {
         </div>
       </section>
     </>
+  );
+};
+
+const parseJwtPayload = (token) => {
+  if (!token) return null;
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(atob(normalized));
+  } catch (error) {
+    return null;
+  }
+};
+
+const deriveDisplayName = (data) => {
+  const tokenPayload = parseJwtPayload(data?.token);
+  const nameFromToken =
+    tokenPayload?.name ||
+    tokenPayload?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ||
+    tokenPayload?.email ||
+    tokenPayload?.sub ||
+    '';
+  const user = data?.user || data?.userData || {};
+  const nameFromData =
+    data?.name ||
+    data?.userName ||
+    user?.name ||
+    user?.userName ||
+    [user?.firstName, user?.middleName, user?.lastName].filter(Boolean).join(' ') ||
+    '';
+  return nameFromData || nameFromToken || '';
+};
+
+const deriveProfileImageUrl = (data) => {
+  const tokenPayload = parseJwtPayload(data?.token);
+  const user = data?.user || data?.userData || {};
+  return (
+    data?.profileImageUrl ||
+    data?.profilePictureUrl ||
+    user?.profileImageUrl ||
+    user?.profilePictureUrl ||
+    tokenPayload?.profileImageUrl ||
+    tokenPayload?.profilePictureUrl ||
+    tokenPayload?.profile_image_url ||
+    tokenPayload?.profile_picture_url ||
+    tokenPayload?.picture ||
+    tokenPayload?.avatar ||
+    tokenPayload?.image ||
+    tokenPayload?.photo ||
+    ''
   );
 };
 

@@ -61,6 +61,7 @@ services:
       dockerfile: UI/Dockerfile
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:5215/}
+        VITE_TINYMCE_API_KEY: ${VITE_TINYMCE_API_KEY:-}
     restart: unless-stopped
     depends_on:
       - api

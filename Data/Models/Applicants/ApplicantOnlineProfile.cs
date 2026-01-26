@@ -20,6 +20,6 @@ namespace Data.Models
         [Unicode(false)]
         public string Url { get; set; } = null!;
 
-        public virtual ApplicantProfile Profile { get; set; } = null!;
+        public virtual QXIUser User { get; set; } = null!;
     }
 }

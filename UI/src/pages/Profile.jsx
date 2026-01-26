@@ -2,10 +2,65 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useLoader } from "@/contexts/LoaderContext";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { useToast } from "@/components/ui/use-toast";
+import { DatePicker } from "@/components/ui/date-picker";
 import SkillMultiSelect from "@/components/SkillMultiSelect";
+import Cropper from "react-easy-crop";
+
+const createImage = (url) =>
+    new Promise((resolve, reject) => {
+        const image = new Image();
+        image.addEventListener("load", () => resolve(image));
+        image.addEventListener("error", (error) => reject(error));
+        image.setAttribute("crossOrigin", "anonymous");
+        image.src = url;
+    });
+
+const getCroppedImage = async (imageSrc, pixelCrop, fileType) => {
+    const image = await createImage(imageSrc);
+    const canvas = document.createElement("canvas");
+    canvas.width = pixelCrop.width;
+    canvas.height = pixelCrop.height;
+    const ctx = canvas.getContext("2d");
+
+    ctx.drawImage(
+        image,
+        pixelCrop.x,
+        pixelCrop.y,
+        pixelCrop.width,
+        pixelCrop.height,
+        0,
+        0,
+        pixelCrop.width,
+        pixelCrop.height
+    );
+
+    return new Promise((resolve, reject) => {
+        canvas.toBlob(
+            (blob) => {
+                if (!blob) {
+                    reject(new Error("Failed to crop image."));
+                    return;
+                }
+                resolve(blob);
+            },
+            fileType || "image/jpeg",
+            0.92
+        );
+    });
+};
 
 const Profile = () => {
     const { userId } = useParams();
@@ -18,6 +73,15 @@ const Profile = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [profileImageFile, setProfileImageFile] = useState(null);
     const [profileImagePreview, setProfileImagePreview] = useState("");
+    const [isCropOpen, setIsCropOpen] = useState(false);
+    const [cropImageSrc, setCropImageSrc] = useState("");
+    const [crop, setCrop] = useState({ x: 0, y: 0 });
+    const [zoom, setZoom] = useState(1);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+    const [pendingImageMeta, setPendingImageMeta] = useState({
+        name: "profile-photo.jpg",
+        type: "image/jpeg",
+    });
     const [skillsOptions, setSkillsOptions] = useState([]);
     const [isLoadingSkills, setIsLoadingSkills] = useState(false);
     const [isSavingSkills, setIsSavingSkills] = useState(false);
@@ -50,8 +114,19 @@ const Profile = () => {
                 const result = await response.json();
 
                 if (result.isSuccess) {
+                    const normalized = normalizeProfile(result.data);
                     setProfile(result.data);
-                    setDraftProfile(normalizeProfile(result.data));
+                    setDraftProfile(normalized);
+                    if (!userId) {
+                        if (normalized.profileImageUrl) {
+                            sessionStorage.setItem(
+                                "profileImageUrl",
+                                normalized.profileImageUrl
+                            );
+                        } else {
+                            sessionStorage.removeItem("profileImageUrl");
+                        }
+                    }
                 } else {
                     setError(
                         result?.errors?.[0]?.description ||
@@ -235,23 +310,86 @@ const Profile = () => {
         }));
     };
 
+    const onCropComplete = useCallback((_, areaPixels) => {
+        setCroppedAreaPixels(areaPixels);
+    }, []);
+
     const handleProfileImageChange = (event) => {
         const file = event.target.files?.[0];
-        setProfileImageFile(file || null);
-
         if (!file) {
-            setProfileImagePreview("");
             return;
         }
+
+        setPendingImageMeta({
+            name: file.name || "profile-photo.jpg",
+            type: file.type || "image/jpeg",
+        });
 
         const reader = new FileReader();
         reader.onload = () => {
             if (typeof reader.result === "string") {
-                setProfileImagePreview(reader.result);
+                setCropImageSrc(reader.result);
+                setCrop({ x: 0, y: 0 });
+                setZoom(1);
+                setIsCropOpen(true);
             }
         };
         reader.readAsDataURL(file);
+        event.target.value = "";
     };
+
+    const applyCroppedImage = useCallback(async () => {
+        if (!cropImageSrc || !croppedAreaPixels) {
+            toast({
+                title: "Crop image",
+                description: "Please adjust the crop area before saving.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        try {
+            const blob = await getCroppedImage(
+                cropImageSrc,
+                croppedAreaPixels,
+                pendingImageMeta.type
+            );
+            const fileName = pendingImageMeta.name || "profile-photo.jpg";
+            const fileType = pendingImageMeta.type || blob.type || "image/jpeg";
+            const croppedFile = new File([blob], fileName, { type: fileType });
+
+            if (profileImagePreview?.startsWith("blob:")) {
+                URL.revokeObjectURL(profileImagePreview);
+            }
+
+            const previewUrl = URL.createObjectURL(blob);
+            setProfileImageFile(croppedFile);
+            setProfileImagePreview(previewUrl);
+            setIsCropOpen(false);
+            setCropImageSrc("");
+            setCroppedAreaPixels(null);
+        } catch (error) {
+            toast({
+                title: "Crop failed",
+                description: "Unable to crop the selected image.",
+                variant: "destructive",
+            });
+        }
+    }, [
+        cropImageSrc,
+        croppedAreaPixels,
+        pendingImageMeta,
+        profileImagePreview,
+        toast,
+    ]);
+
+    const closeCropper = useCallback(() => {
+        setIsCropOpen(false);
+        setCropImageSrc("");
+        setCroppedAreaPixels(null);
+        setCrop({ x: 0, y: 0 });
+        setZoom(1);
+    }, []);
 
     const uploadFile = async (file, category) => {
         const response = await fetch(
@@ -340,7 +478,6 @@ const Profile = () => {
                     profile.lastName ??
                     null,
                 bio: userData.bio ?? null,
-                linkedInProfileUrl: userData.linkedInProfileUrl ?? null,
                 phoneNumber: userData.phoneNumber || profile.phoneNumber || "",
                 position: userData.position ?? null,
                 profilePictureUrl: userData.profilePictureUrl ?? null,
@@ -352,7 +489,7 @@ const Profile = () => {
             };
 
             const updateResponse = await fetch(
-                API_ENDPOINTS.updateUser(profile.userId),
+                API_ENDPOINTS.updateMyProfile,
                 {
                     method: "PUT",
                     headers: {
@@ -427,7 +564,7 @@ const Profile = () => {
             }
 
             const response = await fetch(
-                API_ENDPOINTS.updateApplicantProfile(profile.userId),
+                API_ENDPOINTS.updateMyApplicantProfile,
                 {
                     method: "PUT",
                     headers: {
@@ -509,7 +646,6 @@ const Profile = () => {
                 firstName: userData.firstName || profile.firstName || "Applicant",
                 lastName: userData.lastName ?? profile.lastName ?? null,
                 bio: userData.bio ?? null,
-                linkedInProfileUrl: userData.linkedInProfileUrl ?? null,
                 phoneNumber: userData.phoneNumber || profile.phoneNumber || "",
                 position: userData.position ?? null,
                 profilePictureUrl: userData.profilePictureUrl ?? null,
@@ -524,7 +660,7 @@ const Profile = () => {
             };
 
             const updateResponse = await fetch(
-                API_ENDPOINTS.updateUser(profile.userId),
+                API_ENDPOINTS.updateMyProfile,
                 {
                     method: "PUT",
                     headers: {
@@ -1840,9 +1976,76 @@ const Profile = () => {
                     )}
                 </div>
             </section>
+            <CropperDialog
+                isOpen={isCropOpen}
+                imageSrc={cropImageSrc}
+                crop={crop}
+                zoom={zoom}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+                onCancel={closeCropper}
+                onSave={applyCroppedImage}
+            />
         </>
     );
 };
+
+const CropperDialog = ({
+    isOpen,
+    imageSrc,
+    crop,
+    zoom,
+    onCropChange,
+    onZoomChange,
+    onCropComplete,
+    onCancel,
+    onSave,
+}) => (
+    <AlertDialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
+        <AlertDialogContent className="max-w-3xl">
+            <AlertDialogHeader>
+                <AlertDialogTitle>Crop profile photo</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Adjust the crop area and zoom before saving.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-4">
+                <div className="relative h-80 w-full overflow-hidden rounded-xl bg-slate-950">
+                    {imageSrc ? (
+                        <Cropper
+                            image={imageSrc}
+                            crop={crop}
+                            zoom={zoom}
+                            aspect={1}
+                            cropShape="round"
+                            showGrid={false}
+                            onCropChange={onCropChange}
+                            onZoomChange={onZoomChange}
+                            onCropComplete={onCropComplete}
+                        />
+                    ) : null}
+                </div>
+                <div className="flex items-center gap-4">
+                    <span className="text-sm text-gray-600">Zoom</span>
+                    <input
+                        type="range"
+                        min="1"
+                        max="3"
+                        step="0.05"
+                        value={zoom}
+                        onChange={(e) => onZoomChange(Number(e.target.value))}
+                        className="w-full"
+                    />
+                </div>
+            </div>
+            <AlertDialogFooter>
+                <AlertDialogCancel onClick={onCancel}>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={onSave}>Save crop</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+);
 
 const normalizeDateValue = (value) => {
     if (!value) return "";
@@ -1993,12 +2196,20 @@ const FormInput = ({ label, value, onChange, type = "text", required }) => (
             {label}
             {required ? " *" : ""}
         </span>
-        <input
-            type={type}
-            value={value}
-            onChange={(event) => onChange(event.target.value)}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-gray-900"
-        />
+        {type === "date" ? (
+            <DatePicker
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-gray-900"
+            />
+        ) : (
+            <input
+                type={type}
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-gray-900"
+            />
+        )}
     </label>
 );
 

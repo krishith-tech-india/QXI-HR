@@ -3,10 +3,65 @@ import { Helmet } from "react-helmet";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { useLoader } from "@/contexts/LoaderContext";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import SkillMultiSelect from "@/components/SkillMultiSelect";
+import Cropper from "react-easy-crop";
+
+const createImage = (url) =>
+    new Promise((resolve, reject) => {
+        const image = new Image();
+        image.addEventListener("load", () => resolve(image));
+        image.addEventListener("error", (error) => reject(error));
+        image.setAttribute("crossOrigin", "anonymous");
+        image.src = url;
+    });
+
+const getCroppedImage = async (imageSrc, pixelCrop, fileType) => {
+    const image = await createImage(imageSrc);
+    const canvas = document.createElement("canvas");
+    canvas.width = pixelCrop.width;
+    canvas.height = pixelCrop.height;
+    const ctx = canvas.getContext("2d");
+
+    ctx.drawImage(
+        image,
+        pixelCrop.x,
+        pixelCrop.y,
+        pixelCrop.width,
+        pixelCrop.height,
+        0,
+        0,
+        pixelCrop.width,
+        pixelCrop.height
+    );
+
+    return new Promise((resolve, reject) => {
+        canvas.toBlob(
+            (blob) => {
+                if (!blob) {
+                    reject(new Error("Failed to crop image."));
+                    return;
+                }
+                resolve(blob);
+            },
+            fileType || "image/jpeg",
+            0.92
+        );
+    });
+};
 
 const ApplicantSignup = () => {
     const { toast } = useToast();
@@ -22,6 +77,15 @@ const ApplicantSignup = () => {
     const [profileImageFile, setProfileImageFile] = useState(null);
     const [profileImagePreview, setProfileImagePreview] = useState("");
     const [profileImageUrl, setProfileImageUrl] = useState("");
+    const [isCropOpen, setIsCropOpen] = useState(false);
+    const [cropImageSrc, setCropImageSrc] = useState("");
+    const [crop, setCrop] = useState({ x: 0, y: 0 });
+    const [zoom, setZoom] = useState(1);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+    const [pendingImageMeta, setPendingImageMeta] = useState({
+        name: "profile-photo.jpg",
+        type: "image/jpeg",
+    });
     const [resumeFile, setResumeFile] = useState(null);
     const [resumeUrl, setResumeUrl] = useState("");
 
@@ -57,6 +121,7 @@ const ApplicantSignup = () => {
     const [languages, setLanguages] = useState([]);
 
     const skillsAbortRef = useRef(null);
+    const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
     const fetchSkills = useCallback(async (searchKeyword = "") => {
         setIsLoadingSkills(true);
@@ -156,8 +221,24 @@ const ApplicantSignup = () => {
         []
     );
 
+    const sanitizePhoneInput = (value) => {
+        const digits = String(value || "").replace(/\D/g, "");
+        if (!digits) return "";
+        return digits.length > 10 ? digits.slice(-10) : digits;
+    };
+
+    const formatPhoneNumber = (value) =>
+        value ? `+91${sanitizePhoneInput(value)}` : "";
+
     const handleChange = (e) => {
         const { name, value } = e.target;
+        if (name === "phoneNumber") {
+            setFormData((prev) => ({
+                ...prev,
+                [name]: sanitizePhoneInput(value),
+            }));
+            return;
+        }
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
@@ -190,23 +271,86 @@ const ApplicantSignup = () => {
         return profiles;
     };
 
+    const onCropComplete = useCallback((_, areaPixels) => {
+        setCroppedAreaPixels(areaPixels);
+    }, []);
+
     const handleProfileImageChange = (event) => {
         const file = event.target.files?.[0];
-        setProfileImageFile(file || null);
-
         if (!file) {
-            setProfileImagePreview("");
             return;
         }
+
+        setPendingImageMeta({
+            name: file.name || "profile-photo.jpg",
+            type: file.type || "image/jpeg",
+        });
 
         const reader = new FileReader();
         reader.onload = () => {
             if (typeof reader.result === "string") {
-                setProfileImagePreview(reader.result);
+                setCropImageSrc(reader.result);
+                setCrop({ x: 0, y: 0 });
+                setZoom(1);
+                setIsCropOpen(true);
             }
         };
         reader.readAsDataURL(file);
+        event.target.value = "";
     };
+
+    const applyCroppedImage = useCallback(async () => {
+        if (!cropImageSrc || !croppedAreaPixels) {
+            toast({
+                title: "Crop image",
+                description: "Please adjust the crop area before saving.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        try {
+            const blob = await getCroppedImage(
+                cropImageSrc,
+                croppedAreaPixels,
+                pendingImageMeta.type
+            );
+            const fileName = pendingImageMeta.name || "profile-photo.jpg";
+            const fileType = pendingImageMeta.type || blob.type || "image/jpeg";
+            const croppedFile = new File([blob], fileName, { type: fileType });
+
+            if (profileImagePreview?.startsWith("blob:")) {
+                URL.revokeObjectURL(profileImagePreview);
+            }
+
+            const previewUrl = URL.createObjectURL(blob);
+            setProfileImageFile(croppedFile);
+            setProfileImagePreview(previewUrl);
+            setIsCropOpen(false);
+            setCropImageSrc("");
+            setCroppedAreaPixels(null);
+        } catch (error) {
+            toast({
+                title: "Crop failed",
+                description: "Unable to crop the selected image.",
+                variant: "destructive",
+            });
+        }
+    }, [
+        cropImageSrc,
+        croppedAreaPixels,
+        pendingImageMeta,
+        profileImagePreview,
+        toast,
+    ]);
+
+    const closeCropper = useCallback(() => {
+        setIsCropOpen(false);
+        setCropImageSrc("");
+        setCroppedAreaPixels(null);
+        setCrop({ x: 0, y: 0 });
+        setZoom(1);
+    }, []);
 
     const uploadFile = async (file, category) => {
         const response = await fetch(
@@ -235,7 +379,9 @@ const ApplicantSignup = () => {
         setFormData((prev) => ({
             ...prev,
             email: draft.email || prev.email,
-            phoneNumber: draft.phoneNumber || prev.phoneNumber,
+            phoneNumber: sanitizePhoneInput(
+                draft.phoneNumber || prev.phoneNumber
+            ),
             firstName: draft.firstName || "",
             middleName: draft.middleName || "",
             lastName: draft.lastName || "",
@@ -283,6 +429,15 @@ const ApplicantSignup = () => {
             return;
         }
 
+        if (!isValidEmail(formData.email)) {
+            toast({
+                title: "Validation Error",
+                description: "Please enter a valid email address.",
+                variant: "destructive",
+            });
+            return;
+        }
+
         showLoader();
         try {
             const response = await fetch(API_ENDPOINTS.startApplicantSignup, {
@@ -290,7 +445,7 @@ const ApplicantSignup = () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     email: formData.email,
-                    phoneNumber: formData.phoneNumber,
+                    phoneNumber: formatPhoneNumber(formData.phoneNumber),
                 }),
             });
             const result = await response.json();
@@ -420,7 +575,7 @@ const ApplicantSignup = () => {
                     lastName: formData.lastName || null,
                     dateOfBirth: formData.dateOfBirth || null,
                     profileImageUrl: uploadedImageUrl,
-                    phoneNumber: formData.phoneNumber,
+                    phoneNumber: formatPhoneNumber(formData.phoneNumber),
                 }),
             });
 
@@ -724,7 +879,7 @@ const ApplicantSignup = () => {
                     content="Create your applicant account to apply for jobs at QXI HR."
                 />
             </Helmet>
-            <section className="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-amber-50 py-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
+            <section className="relative flex-1 bg-gradient-to-br from-slate-50 via-white to-amber-50 py-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
                 <motion.div
                     className="absolute -top-32 -left-20 w-72 h-72 rounded-full bg-gradient-to-br from-blue-200/60 to-amber-200/60 blur-3xl"
                     animate={{ y: [0, 20, 0], x: [0, 12, 0] }}
@@ -792,13 +947,26 @@ const ApplicantSignup = () => {
                                             onChange={handleChange}
                                             required
                                         />
-                                        <InputField
-                                            label="Phone Number *"
-                                            name="phoneNumber"
-                                            value={formData.phoneNumber}
-                                            onChange={handleChange}
-                                            required
-                                        />
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Phone Number *
+                                            </label>
+                                            <div className="flex">
+                                                <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                                                    +91
+                                                </span>
+                                                <input
+                                                    name="phoneNumber"
+                                                    type="number"
+                                                    inputMode="numeric"
+                                                    value={formData.phoneNumber}
+                                                    onChange={handleChange}
+                                                    required
+                                                    className="custom-input rounded-l-none"
+                                                    placeholder="Enter phone number"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
                                     <div className="flex flex-col sm:flex-row gap-3">
                                         <Button
@@ -1002,15 +1170,6 @@ const ApplicantSignup = () => {
                                             <h3 className="text-lg font-semibold text-gray-900">
                                                 Employment history
                                             </h3>
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                onClick={() =>
-                                                    addListItem(setEmployments, emptyEmployment)
-                                                }
-                                            >
-                                                Add Employment
-                                            </Button>
                                         </div>
                                         {employments.length === 0 && (
                                             <p className="text-sm text-gray-500">
@@ -1131,6 +1290,17 @@ const ApplicantSignup = () => {
                                                 </div>
                                             ))}
                                         </div>
+                                        <div className="flex justify-end">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() =>
+                                                    addListItem(setEmployments, emptyEmployment)
+                                                }
+                                            >
+                                                Add Employment
+                                            </Button>
+                                        </div>
                                     </div>
 
                                     <div className="space-y-4">
@@ -1138,15 +1308,6 @@ const ApplicantSignup = () => {
                                             <h3 className="text-lg font-semibold text-gray-900">
                                                 Education
                                             </h3>
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                onClick={() =>
-                                                    addListItem(setEducations, emptyEducation)
-                                                }
-                                            >
-                                                Add Education
-                                            </Button>
                                         </div>
                                         {educations.length === 0 && (
                                             <p className="text-sm text-gray-500">
@@ -1259,6 +1420,17 @@ const ApplicantSignup = () => {
                                                     </Button>
                                                 </div>
                                             ))}
+                                        </div>
+                                        <div className="flex justify-end">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() =>
+                                                    addListItem(setEducations, emptyEducation)
+                                                }
+                                            >
+                                                Add Education
+                                            </Button>
                                         </div>
                                     </div>
 
@@ -1734,9 +1906,76 @@ const ApplicantSignup = () => {
                     </aside>
                 </div>
             </section>
+            <CropperDialog
+                isOpen={isCropOpen}
+                imageSrc={cropImageSrc}
+                crop={crop}
+                zoom={zoom}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+                onCancel={closeCropper}
+                onSave={applyCroppedImage}
+            />
         </>
     );
 };
+
+const CropperDialog = ({
+    isOpen,
+    imageSrc,
+    crop,
+    zoom,
+    onCropChange,
+    onZoomChange,
+    onCropComplete,
+    onCancel,
+    onSave,
+}) => (
+    <AlertDialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
+        <AlertDialogContent className="max-w-3xl">
+            <AlertDialogHeader>
+                <AlertDialogTitle>Crop profile photo</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Adjust the crop area and zoom before saving.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-4">
+                <div className="relative h-80 w-full overflow-hidden rounded-xl bg-slate-950">
+                    {imageSrc ? (
+                        <Cropper
+                            image={imageSrc}
+                            crop={crop}
+                            zoom={zoom}
+                            aspect={1}
+                            cropShape="round"
+                            showGrid={false}
+                            onCropChange={onCropChange}
+                            onZoomChange={onZoomChange}
+                            onCropComplete={onCropComplete}
+                        />
+                    ) : null}
+                </div>
+                <div className="flex items-center gap-4">
+                    <span className="text-sm text-gray-600">Zoom</span>
+                    <input
+                        type="range"
+                        min="1"
+                        max="3"
+                        step="0.05"
+                        value={zoom}
+                        onChange={(e) => onZoomChange(Number(e.target.value))}
+                        className="w-full"
+                    />
+                </div>
+            </div>
+            <AlertDialogFooter>
+                <AlertDialogCancel onClick={onCancel}>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={onSave}>Save crop</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+);
 
 const InputField = ({ label, type, options, ...props }) => (
     <div>
@@ -1752,6 +1991,8 @@ const InputField = ({ label, type, options, ...props }) => (
                     </option>
                 ))}
             </select>
+        ) : type === "date" ? (
+            <DatePicker {...props} className="custom-input" />
         ) : (
             <input type={type} {...props} className="custom-input" />
         )}

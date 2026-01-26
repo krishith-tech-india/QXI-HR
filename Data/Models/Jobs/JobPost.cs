@@ -19,7 +19,7 @@ namespace Data.Models
 
         [StringLength(200)]
         [Unicode(false)]
-        public string CompanyName { get; set; } = string.Empty;
+        public string? CompanyName { get; set; }
 
         [StringLength(100)]
         [Unicode(false)]
@@ -35,6 +35,14 @@ namespace Data.Models
         [StringLength(200)]
         [Unicode(false)]
         public string Experience { get; set; } = string.Empty;
+
+        [StringLength(100)]
+        [Unicode(false)]
+        public string JobCode { get; set; } = string.Empty;
+
+        [StringLength(50)]
+        [Unicode(false)]
+        public string? RecruiterWhatsAppNumber { get; set; }
 
         public virtual ICollection<JobApplication> Applications { get; set; } = new List<JobApplication>();
         public virtual ICollection<JobPostSkill> JobPostSkills { get; set; } = new List<JobPostSkill>();

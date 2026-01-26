@@ -826,7 +826,6 @@ namespace Data.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("CompanyName")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .IsUnicode(false)
                         .HasColumnType("character varying(200)");
@@ -852,11 +851,24 @@ namespace Data.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("JobCode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("character varying(100)")
+                        .HasDefaultValueSql("('QXIJB-' || lpad(nextval('\"JobCodeSequence\"')::text, 3, '0'))");
+
                     b.Property<string>("Location")
                         .IsRequired()
                         .HasMaxLength(100)
                         .IsUnicode(false)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<string>("RecruiterWhatsAppNumber")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Salary")
                         .IsRequired()
@@ -967,10 +979,6 @@ namespace Data.Migrations
                         .IsUnicode(false)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("LinkedInProfileUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
                     b.Property<string>("Password")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -998,6 +1006,12 @@ namespace Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<string>("UserCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("character varying(100)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
@@ -1008,10 +1022,9 @@ namespace Data.Migrations
                     b.HasIndex("IsActive")
                         .HasDatabaseName("IX_Users_IsActive");
 
-                    b.HasIndex("PhoneNumber")
+                    b.HasIndex("UserCode")
                         .IsUnique()
-                        .HasDatabaseName("UQ_Users_PhoneNumber")
-                        .HasFilter("\"IsActive\" = true");
+                        .HasDatabaseName("UQ_Users_UserCode");
 
                     b.ToTable("Users");
                 });
@@ -1146,13 +1159,13 @@ namespace Data.Migrations
 
             modelBuilder.Entity("Data.Models.ApplicantOnlineProfile", b =>
                 {
-                    b.HasOne("Data.Models.ApplicantProfile", "Profile")
+                    b.HasOne("Data.Models.QXIUser", "User")
                         .WithMany("OnlineProfiles")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Profile");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Data.Models.ApplicantProfile", b =>
@@ -1276,8 +1289,6 @@ namespace Data.Migrations
 
                     b.Navigation("Languages");
 
-                    b.Navigation("OnlineProfiles");
-
                     b.Navigation("Projects");
                 });
 
@@ -1305,6 +1316,8 @@ namespace Data.Migrations
                     b.Navigation("ApplicantSkills");
 
                     b.Navigation("JobApplications");
+
+                    b.Navigation("OnlineProfiles");
 
                     b.Navigation("UserRoles");
                 });

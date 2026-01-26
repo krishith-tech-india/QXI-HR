@@ -20,6 +20,7 @@ const CreateProfileForm = () => {
   const { toast } = useToast();
   const [skills, setSkills] = useState([]);
   const [isLoadingSkills, setIsLoadingSkills] = useState(false);
+  const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
   useEffect(() => {
     const fetchSkills = async () => {
@@ -50,6 +51,15 @@ const CreateProfileForm = () => {
       toast({
         title: "Error",
         description: "Please fill in all required fields.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!isValidEmail(profileData.email)) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a valid email address.",
         variant: "destructive"
       });
       return;

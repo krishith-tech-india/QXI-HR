@@ -5,5 +5,5 @@ namespace Infrastructure.Services;
 
 public interface IJwtTokenService
 {
-    AuthRespDto GenerateToken(string username, string? displayName, params Roles[] role);
+    AuthRespDto GenerateToken(string username, string? displayName, string? profilePictureUrl, params Roles[] role);
 }

@@ -114,8 +114,36 @@ namespace Infrastructure.Services
 
         public async Task<IEnumerable<JobApplicationDTO>> GetByJobPostIdAsync(int jobPostId)
         {
-            var list = await _jobApplicationRepo.Query(a => a.JobPostId == jobPostId, true).ToListAsync();
-            return list.Adapt<IEnumerable<JobApplicationDTO>>();
+            return await GetByJobPostIdAsync(jobPostId, false);
+        }
+
+        public async Task<IEnumerable<JobApplicationDTO>> GetByJobPostIdAsync(int jobPostId, bool includeInactive)
+        {
+            IQueryable<JobApplication> query = _jobApplicationRepo.GetAll(true);
+            if (includeInactive)
+            {
+                query = query.IgnoreQueryFilters();
+            }
+
+            var list = await query
+                .Where(a => a.JobPostId == jobPostId)
+                .Include(a => a.JobPost)
+                .ToListAsync();
+
+            return list.Select(a => new JobApplicationDTO
+            {
+                Id = a.Id,
+                ApplicantName = a.ApplicantName,
+                ApplicantEmail = a.ApplicantEmail,
+                ApplicantPhoneNumber = a.ApplicantPhoneNumber,
+                ResumeUrl = a.ResumeUrl,
+                CoverLetterUrl = a.CoverLetterUrl,
+                JobPostId = a.JobPostId,
+                ApplicantUserId = a.ApplicantUserId,
+                JobPostTitle = a.JobPost?.Title,
+                JobPostCompanyName = a.JobPost?.CompanyName,
+                JobPostLocation = a.JobPost?.Location
+            });
         }
 
         public async Task<IEnumerable<JobApplicationDTO>> GetByApplicantUserIdAsync(int userId)
@@ -232,12 +260,63 @@ namespace Infrastructure.Services
                         fromAddress = "noreply@localhost";
                     }
 
+                    var subject = "Your QXI HR verification code";
+                    var htmlBody = $@"
+<!doctype html>
+<html lang=""en"">
+  <head>
+    <meta charset=""utf-8"" />
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1"" />
+    <title>{subject}</title>
+  </head>
+  <body style=""margin:0;padding:0;background-color:#f4f6fb;font-family:Arial,Helvetica,sans-serif;color:#1f2937;"">
+    <table role=""presentation"" cellpadding=""0"" cellspacing=""0"" width=""100%"" style=""background-color:#f4f6fb;padding:24px 0;"">
+      <tr>
+        <td align=""center"">
+          <table role=""presentation"" cellpadding=""0"" cellspacing=""0"" width=""600"" style=""max-width:600px;background:#ffffff;border-radius:16px;box-shadow:0 10px 30px rgba(15,23,42,0.08);overflow:hidden;"">
+            <tr>
+              <td style=""padding:24px 28px 0 28px;"">
+                <img src=""https://qxi-applicant-docs.qxihr.com/9e28b840-49ef-4f18-b91c-bbe506bba1f5_qxi.png"" alt=""QXI HR"" width=""120"" style=""display:block;border:0;outline:none;"" />
+              </td>
+            </tr>
+            <tr>
+              <td style=""padding:16px 28px 0 28px;"">
+                <h1 style=""margin:0;font-size:22px;font-weight:700;color:#0f172a;"">Verify your email</h1>
+                <p style=""margin:12px 0 0 0;font-size:14px;line-height:22px;color:#475569;"">
+                  Use the verification code below to continue your QXI HR signup. This code is valid for a limited time.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style=""padding:20px 28px;"">
+                <div style=""background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;text-align:center;"">
+                  <span style=""display:block;font-size:28px;letter-spacing:6px;font-weight:700;color:#0f172a;"">{code}</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style=""padding:0 28px 24px 28px;"">
+                <p style=""margin:0;font-size:12px;line-height:18px;color:#64748b;"">
+                  If you didn’t request this email, you can safely ignore it.
+                </p>
+              </td>
+            </tr>
+          </table>
+          <p style=""margin:16px 0 0 0;font-size:11px;color:#94a3b8;"">
+            © {DateTime.UtcNow.Year} QXI HR (OPC) PRIVATE LIMITED
+          </p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>";
+
                     var mail = new System.Net.Mail.MailMessage()
                     {
                         From = new System.Net.Mail.MailAddress(fromAddress, fromName),
-                        Subject = "Your verification code",
-                        Body = $"Your verification code is: {code}",
-                        IsBodyHtml = false
+                        Subject = subject,
+                        Body = htmlBody,
+                        IsBodyHtml = true
                     };
                     mail.To.Add(email);
 

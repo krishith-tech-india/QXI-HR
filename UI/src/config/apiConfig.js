@@ -1,6 +1,10 @@
 const API_BASE_URL =
     import.meta.env.VITE_API_BASE_URL || "http://localhost:5215/";
 
+export const TINYMCE_API_KEY =
+    import.meta.env.VITE_TINYMCE_API_KEY ||
+    "8qmir232ehtobat3grr268eel3x70t7246sepzvg23dq84fa";
+
 export const API_ENDPOINTS = {
     login: `${API_BASE_URL}api/Auth/login`,
     registerApplicant: `${API_BASE_URL}api/Auth/register`,
@@ -17,12 +21,14 @@ export const API_ENDPOINTS = {
     getMyApplicantProfile: `${API_BASE_URL}api/ApplicantProfiles/GetMyProfile`,
     updateApplicantProfile: (id) =>
         `${API_BASE_URL}api/ApplicantProfiles/Upsert/${id}`,
+    updateMyApplicantProfile: `${API_BASE_URL}api/ApplicantProfiles/UpdateMyProfile`,
     getApplicantUploadUrl: (filename, category) =>
         `${API_BASE_URL}api/ApplicantProfiles/GetUploadUrl?filename=${encodeURIComponent(filename)}&category=${encodeURIComponent(category || "")}`,
     getJobPosts: `${API_BASE_URL}api/JobPosts/GetAll`,
-    getJobPostById: (id) => `${API_BASE_URL}api/JobPosts/GetById/${id}`,
-    getApplicationsByJobId: (jobId) =>
-        `${API_BASE_URL}api/JobApplications/GetByJobPost/ByJob/${jobId}`,
+    getJobPostById: (id, includeInactive = false) =>
+        `${API_BASE_URL}api/JobPosts/GetById/${id}${includeInactive ? "?includeInactive=true" : ""}`,
+    getApplicationsByJobId: (jobId, includeInactive = false) =>
+        `${API_BASE_URL}api/JobApplications/GetByJobPost/ByJob/${jobId}${includeInactive ? "?includeInactive=true" : ""}`,
     getMyApplications: `${API_BASE_URL}api/JobApplications/GetMyApplications`,
     createJobPost: `${API_BASE_URL}api/JobPosts/Create`,
     updateJobPost: (id) => `${API_BASE_URL}api/JobPosts/Update/${id}`,
@@ -39,6 +45,7 @@ export const API_ENDPOINTS = {
     getUserById: (id) => `${API_BASE_URL}api/Users/GetById/${id}`,
     createUser: `${API_BASE_URL}api/Users/Create`,
     updateUser: (id) => `${API_BASE_URL}api/Users/Update/${id}`,
+    updateMyProfile: `${API_BASE_URL}api/Users/UpdateMyProfile`,
     deleteUser: (id) => `${API_BASE_URL}api/Users/Delete/${id}`,
     getRoles: `${API_BASE_URL}api/Roles/GetAll`,
     getSkills: `${API_BASE_URL}api/Skills/GetAll`,

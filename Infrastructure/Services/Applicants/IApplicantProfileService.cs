@@ -6,6 +6,7 @@ namespace Infrastructure.Services
     {
         Task<ApplicantProfileDto?> GetByUserIdAsync(int userId);
         Task<ApplicantProfileDto?> GetByEmailAsync(string email);
+        Task<int?> GetUserIdByEmailAsync(string email);
         Task<ApplicantProfileDto> UpsertAsync(int userId, ApplicantProfileUpsertDto dto);
         Task<ResumePresignedUrlDto> GetUploadUrl(string filename, string category);
     }

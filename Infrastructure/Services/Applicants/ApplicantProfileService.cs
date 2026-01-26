@@ -90,27 +90,43 @@ namespace Infrastructure.Services
             return await GetByUserIdAsync(user.Id);
         }
 
+        public async Task<int?> GetUserIdByEmailAsync(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return null;
+            }
+
+            var normalized = email.Trim();
+            return await _userRepo.Query(u => EF.Functions.ILike(u.Email, normalized), true)
+                .Select(u => (int?)u.Id)
+                .FirstOrDefaultAsync();
+        }
+
         public async Task<ApplicantProfileDto> UpsertAsync(int userId, ApplicantProfileUpsertDto dto)
         {
             var profile = await _profileRepo.Query(p => p.UserId == userId, false)
                 .Include(p => p.Employments)
                 .Include(p => p.Educations)
                 .Include(p => p.Projects)
-                .Include(p => p.OnlineProfiles)
                 .Include(p => p.Certifications)
                 .Include(p => p.Languages)
+                .Include(p => p.User)
+                    .ThenInclude(u => u.OnlineProfiles)
                 .FirstOrDefaultAsync();
 
             if (profile == null)
             {
                 profile = new ApplicantProfile { UserId = userId };
                 ApplyProfileData(profile, userId, dto);
+                await ReplaceOnlineProfilesAsync(userId, dto.OnlineProfiles);
                 _profileRepo.Insert(profile);
             }
             else
             {
                 await ClearExistingCollections(userId);
                 ApplyProfileData(profile, userId, dto);
+                await ReplaceOnlineProfilesAsync(userId, dto.OnlineProfiles);
                 _profileRepo.Update(profile);
             }
 
@@ -150,14 +166,16 @@ namespace Infrastructure.Services
 
         private IQueryable<ApplicantProfile> BuildProfileQuery(int userId)
         {
-            return _profileRepo.Query(p => p.UserId == userId, false)
+            return _profileRepo.Query(p => p.UserId == userId, true)
+                .AsSplitQuery()
                 .Include(p => p.User)
                     .ThenInclude(u => u.ApplicantSkills)
                         .ThenInclude(us => us.Skill)
+                .Include(p => p.User)
+                    .ThenInclude(u => u.OnlineProfiles)
                 .Include(p => p.Employments)
                 .Include(p => p.Educations)
                 .Include(p => p.Projects)
-                .Include(p => p.OnlineProfiles)
                 .Include(p => p.Certifications)
                 .Include(p => p.Languages);
         }
@@ -252,11 +270,6 @@ namespace Infrastructure.Services
                 .Select(x => { x.Id = 0; x.UserId = userId; return x; })
                 .ToList();
 
-            profile.OnlineProfiles = (dto.OnlineProfiles ?? new List<ApplicantOnlineProfileDto>())
-                .Select(x => x.Adapt<ApplicantOnlineProfile>())
-                .Select(x => { x.Id = 0; x.UserId = userId; return x; })
-                .ToList();
-
             profile.Certifications = (dto.Certifications ?? new List<ApplicantCertificationDto>())
                 .Select(x => x.Adapt<ApplicantCertification>())
                 .Select(x => { x.Id = 0; x.UserId = userId; return x; })
@@ -266,6 +279,32 @@ namespace Infrastructure.Services
                 .Select(x => x.Adapt<ApplicantLanguage>())
                 .Select(x => { x.Id = 0; x.UserId = userId; return x; })
                 .ToList();
+        }
+
+        private async Task ReplaceOnlineProfilesAsync(int userId, ICollection<ApplicantOnlineProfileDto>? onlineProfiles)
+        {
+            var existing = await _onlineProfileRepo.Query(e => e.UserId == userId, false).ToListAsync();
+            if (existing.Count > 0)
+            {
+                _onlineProfileRepo.DeleteRange(existing);
+            }
+
+            var sanitized = (onlineProfiles ?? new List<ApplicantOnlineProfileDto>())
+                .Where(p => !string.IsNullOrWhiteSpace(p.Platform) && !string.IsNullOrWhiteSpace(p.Url))
+                .Select(p => new ApplicantOnlineProfile
+                {
+                    UserId = userId,
+                    Platform = p.Platform.Trim(),
+                    Url = p.Url.Trim()
+                })
+                .ToList();
+
+            if (sanitized.Count > 0)
+            {
+                _onlineProfileRepo.InsertRange(sanitized);
+            }
+
+            await _onlineProfileRepo.SaveChangesAsync();
         }
     }
 }

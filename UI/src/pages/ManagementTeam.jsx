@@ -7,7 +7,11 @@ import {
     Trash2,
     Mail,
     Phone,
+    Facebook,
+    Instagram,
     Linkedin,
+    Youtube,
+    Github,
     ChevronLeft,
     ChevronRight,
     Loader2,
@@ -29,21 +33,63 @@ import {
 } from "@/components/ui/alert-dialog";
 import { API_ENDPOINTS, JOB_PAGE_SIZE } from "@/config/apiConfig";
 
+const resolveOnlineProfileUrl = (member, platform) => {
+    if (!member?.onlineProfiles?.length) return "";
+    const match = member.onlineProfiles.find(
+        (profile) =>
+            profile?.platform?.toLowerCase() === platform.toLowerCase() &&
+            profile?.url
+    );
+    return match?.url || "";
+};
+
+const SOCIAL_PLATFORM_CONFIG = [
+    { key: "linkedin", label: "LinkedIn", Icon: Linkedin },
+    { key: "facebook", label: "Facebook", Icon: Facebook },
+    { key: "instagram", label: "Instagram", Icon: Instagram },
+    { key: "youtube", label: "YouTube", Icon: Youtube },
+    { key: "github", label: "GitHub", Icon: Github },
+];
+
+const buildSocialLinks = (member) =>
+    SOCIAL_PLATFORM_CONFIG.map((platform) => ({
+        ...platform,
+        url: resolveOnlineProfileUrl(member, platform.label),
+    })).filter((item) => item.url);
+
+const ROLE_GROUPS = [
+    { key: "Admin", label: "Admins" },
+    { key: "Staff", label: "Staff" },
+    { key: "Applicant", label: "Applicants" },
+];
+
+const buildRoleMap = (factory) =>
+    ROLE_GROUPS.reduce((acc, role) => {
+        acc[role.key] = factory();
+        return acc;
+    }, {});
+
 const ManagementTeam = () => {
-    const [teamMembers, setTeamMembers] = useState([]);
+    const [membersByRole, setMembersByRole] = useState(() =>
+        buildRoleMap(() => [])
+    );
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingMember, setEditingMember] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalItems, setTotalItems] = useState(0);
+    const [isStaffOrAdmin, setIsStaffOrAdmin] = useState(false);
+    const [paginationByRole, setPaginationByRole] = useState(() =>
+        buildRoleMap(() => ({ page: 1, total: 0 }))
+    );
+    const [loadingByRole, setLoadingByRole] = useState(() =>
+        buildRoleMap(() => false)
+    );
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
     const { showLoader, hideLoader } = useLoader();
 
-    const fetchTeamMembers = useCallback(
-        async (page) => {
-            setIsLoading(true);
-            showLoader();
+    const fetchTeamMembersByRole = useCallback(
+        async (roleKey, page) => {
+            setLoadingByRole((prev) => ({ ...prev, [roleKey]: true }));
             try {
                 const token = sessionStorage.getItem("token");
                 const response = await fetch(API_ENDPOINTS.getUsers, {
@@ -55,52 +101,86 @@ const ManagementTeam = () => {
                     body: JSON.stringify({
                         page: page,
                         pageSize: JOB_PAGE_SIZE || 10,
+                        filters: [
+                            {
+                                fieldName: "roleName",
+                                value: roleKey,
+                                operator: "Equals",
+                            },
+                        ],
                     }),
                 });
                 const result = await response.json();
                 if (result.isSuccess) {
-                    setTeamMembers(result.data);
-                    setTotalItems(result.total);
-                    setCurrentPage(page);
+                    setMembersByRole((prev) => ({
+                        ...prev,
+                        [roleKey]: result.data,
+                    }));
+                    setPaginationByRole((prev) => ({
+                        ...prev,
+                        [roleKey]: { page, total: result.total },
+                    }));
                 } else {
                     toast({
                         title: "Error",
-                        description: "Failed to fetch team members.",
+                        description: `Failed to fetch ${roleKey} users.`,
                         variant: "destructive",
                     });
                 }
             } catch (error) {
                 toast({
                     title: "Network Error",
-                    description: "Could not connect to the server.",
+                    description: `Could not load ${roleKey} users.`,
                     variant: "destructive",
                 });
+            } finally {
+                setLoadingByRole((prev) => ({ ...prev, [roleKey]: false }));
+            }
+        },
+        [toast]
+    );
+
+    const fetchAllRoles = useCallback(
+        async (pageOverrides = {}, rolesToFetch = ROLE_GROUPS) => {
+            setIsLoading(true);
+            showLoader();
+            try {
+                await Promise.all(
+                    rolesToFetch.map((role) => {
+                        const currentPage =
+                            pageOverrides[role.key] ?? 1;
+                        return fetchTeamMembersByRole(role.key, currentPage);
+                    })
+                );
             } finally {
                 setIsLoading(false);
                 hideLoader();
             }
         },
-        [toast, showLoader, hideLoader]
+        [fetchTeamMembersByRole, showLoader, hideLoader]
     );
 
     useEffect(() => {
         const role = sessionStorage.getItem("role");
         const token = sessionStorage.getItem("token");
+        const staffOrAdmin = role === "Admin" || role === "Staff";
+        const rolesToFetch = staffOrAdmin
+            ? ROLE_GROUPS
+            : ROLE_GROUPS.filter((item) => item.key !== "Applicant");
         if (token && role === "Admin") {
             setIsAdmin(true);
-            fetchTeamMembers(1);
         } else {
             setIsAdmin(false);
-            fetchTeamMembers(1);
         }
-    }, [fetchTeamMembers]);
+        setIsStaffOrAdmin(staffOrAdmin);
+        fetchAllRoles({}, rolesToFetch);
+    }, [fetchAllRoles]);
 
-    const handlePageChange = (newPage) => {
-        if (
-            newPage >= 1 &&
-            newPage <= Math.ceil(totalItems / (JOB_PAGE_SIZE || 10))
-        ) {
-            fetchTeamMembers(newPage);
+    const handlePageChange = (roleKey, newPage) => {
+        const totalItems = paginationByRole[roleKey]?.total || 0;
+        const totalPages = Math.ceil(totalItems / (JOB_PAGE_SIZE || 10));
+        if (newPage >= 1 && newPage <= totalPages) {
+            fetchTeamMembersByRole(roleKey, newPage);
         }
     };
 
@@ -125,6 +205,12 @@ const ManagementTeam = () => {
             });
         }
     };
+
+    const buildPageOverrides = (roles) =>
+        roles.reduce((acc, role) => {
+            acc[role.key] = paginationByRole[role.key]?.page ?? 1;
+            return acc;
+        }, {});
 
     const handleFormSubmit = async (memberData) => {
         showLoader();
@@ -188,7 +274,10 @@ const ManagementTeam = () => {
                     } successfully.`,
                 });
                 setIsModalOpen(false);
-                fetchTeamMembers(currentPage);
+                fetchAllRoles(
+                    buildPageOverrides(visibleRoleGroups),
+                    visibleRoleGroups
+                );
             } else {
                 processApiErrors(
                     result.errors || {
@@ -221,9 +310,12 @@ const ManagementTeam = () => {
                 if (result.isSuccess) {
                     toast({
                         title: "Success",
-                        description: "Team member deleted successfully.",
-                    });
-                    fetchTeamMembers(currentPage);
+                    description: "Team member deleted successfully.",
+                });
+                    fetchAllRoles(
+                        buildPageOverrides(visibleRoleGroups),
+                        visibleRoleGroups
+                    );
                 } else {
                     toast({
                         title: "Error",
@@ -258,7 +350,12 @@ const ManagementTeam = () => {
         setEditingMember(member);
         setIsModalOpen(true);
     };
-    const totalPages = Math.ceil(totalItems / (JOB_PAGE_SIZE || 10));
+    const visibleRoleGroups = isStaffOrAdmin
+        ? ROLE_GROUPS
+        : ROLE_GROUPS.filter((role) => role.key !== "Applicant");
+    const hasMembers = visibleRoleGroups.some(
+        (role) => (membersByRole[role.key] || []).length > 0
+    );
     const resolveImage = (url) => {
         if (!url) return null;
         if (
@@ -321,11 +418,11 @@ const ManagementTeam = () => {
 
             <section className="section-padding">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {isLoading ? (
+                    {isLoading && !hasMembers ? (
                         <div className="text-center py-16">
                             <Loader2 className="mx-auto h-12 w-12 text-gray-400 animate-spin" />
                         </div>
-                    ) : teamMembers.length === 0 ? (
+                    ) : !hasMembers ? (
                         <div className="text-center py-16">
                             <h3 className="text-2xl font-bold text-gray-900 mb-4">
                                 No Team Members Found
@@ -342,164 +439,273 @@ const ManagementTeam = () => {
                             )}
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {teamMembers.map((member, index) => (
-                                <motion.div
-                                    key={member.id}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    transition={{
-                                        duration: 0.6,
-                                        delay: index * 0.1,
-                                    }}
-                                    className="bg-white rounded-xl shadow-lg overflow-hidden hover-lift flex flex-col"
-                                >
-                                    <div className="relative">
-                                        <img
-                                            src={
-                                                resolveImage(
-                                                    member.profilePictureUrl
-                                                ) ||
-                                                `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face`
-                                            }
-                                            alt={member.firstName}
-                                            className="w-full h-64 object-cover"
-                                        />
-                                        {isAdmin &&
-                                            member.isPublic === false && (
-                                                <span className="absolute top-4 left-4 px-2 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-700">
-                                                    Hidden
-                                                </span>
-                                            )}
-                                        {isAdmin && (
-                                            <div className="absolute top-4 right-4 flex space-x-2">
-                                                <Button
-                                                    size="icon"
-                                                    variant="secondary"
-                                                    onClick={() =>
-                                                        openEditModal(member)
-                                                    }
-                                                    className="w-8 h-8 bg-white/90 hover:bg-white"
-                                                >
-                                                    <Edit className="w-4 h-4" />
-                                                </Button>
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <Button
-                                                            size="icon"
-                                                            variant="destructive"
-                                                            className="w-8 h-8"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </Button>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>
-                                                                Are you sure?
-                                                            </AlertDialogTitle>
-                                                            <AlertDialogDescription>
-                                                                This action
-                                                                cannot be
-                                                                undone. This
-                                                                will permanently
-                                                                delete the team
-                                                                member.
-                                                            </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel>
-                                                                Cancel
-                                                            </AlertDialogCancel>
-                                                            <AlertDialogAction
-                                                                onClick={() =>
-                                                                    handleDeleteMember(
-                                                                        member.id
-                                                                    )
-                                                                }
+                        <div className="space-y-12">
+                            {visibleRoleGroups.map((role) => {
+                                const roleMembers =
+                                    membersByRole[role.key] || [];
+                                const rolePagination =
+                                    paginationByRole[role.key] || {
+                                        page: 1,
+                                        total: 0,
+                                    };
+                                const roleTotalPages = Math.ceil(
+                                    (rolePagination.total || 0) /
+                                        (JOB_PAGE_SIZE || 10)
+                                );
+                                return (
+                                    <div key={role.key}>
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h2 className="text-2xl font-bold text-gray-900">
+                                                {role.label}
+                                            </h2>
+                                            <span className="text-sm text-gray-500">
+                                                {rolePagination.total || 0}{" "}
+                                                total
+                                            </span>
+                                        </div>
+                                        {loadingByRole[role.key] ? (
+                                            <div className="text-center py-8">
+                                                <Loader2 className="mx-auto h-8 w-8 text-gray-400 animate-spin" />
+                                            </div>
+                                        ) : roleMembers.length === 0 ? (
+                                            <p className="text-gray-500">
+                                                No {role.label.toLowerCase()}{" "}
+                                                found.
+                                            </p>
+                                        ) : (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                                {roleMembers.map(
+                                                    (member, index) => {
+                                                        const socialLinks =
+                                                            buildSocialLinks(
+                                                                member
+                                                            );
+                                                        return (
+                                                            <motion.div
+                                                                key={`${role.key}-${member.id}`}
+                                                                initial={{
+                                                                    opacity: 0,
+                                                                    y: 20,
+                                                                }}
+                                                                whileInView={{
+                                                                    opacity: 1,
+                                                                    y: 0,
+                                                                }}
+                                                                transition={{
+                                                                    duration: 0.6,
+                                                                    delay:
+                                                                        index *
+                                                                        0.1,
+                                                                }}
+                                                                className="bg-white rounded-xl shadow-lg overflow-hidden hover-lift flex flex-col"
                                                             >
-                                                                Delete
-                                                            </AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
+                                                                <div className="relative">
+                                                                    <img
+                                                                        src={
+                                                                            resolveImage(
+                                                                                member.profilePictureUrl
+                                                                            ) ||
+                                                                            `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face`
+                                                                        }
+                                                                        alt={
+                                                                            member.firstName
+                                                                        }
+                                                                        className="w-full h-64 object-cover"
+                                                                    />
+                                                                    {isAdmin &&
+                                                                        member.isPublic ===
+                                                                            false && (
+                                                                            <span className="absolute top-4 left-4 px-2 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-700">
+                                                                                Hidden
+                                                                            </span>
+                                                                        )}
+                                                                    {isAdmin && (
+                                                                        <div className="absolute top-4 right-4 flex space-x-2">
+                                                                            <Button
+                                                                                size="icon"
+                                                                                variant="secondary"
+                                                                                onClick={() =>
+                                                                                    openEditModal(
+                                                                                        member
+                                                                                    )
+                                                                                }
+                                                                                className="w-8 h-8 bg-white/90 hover:bg-white"
+                                                                            >
+                                                                                <Edit className="w-4 h-4" />
+                                                                            </Button>
+                                                                            <AlertDialog>
+                                                                                <AlertDialogTrigger asChild>
+                                                                                    <Button
+                                                                                        size="icon"
+                                                                                        variant="destructive"
+                                                                                        className="w-8 h-8"
+                                                                                    >
+                                                                                        <Trash2 className="w-4 h-4" />
+                                                                                    </Button>
+                                                                                </AlertDialogTrigger>
+                                                                                <AlertDialogContent>
+                                                                                    <AlertDialogHeader>
+                                                                                        <AlertDialogTitle>
+                                                                                            Are you
+                                                                                            sure?
+                                                                                        </AlertDialogTitle>
+                                                                                        <AlertDialogDescription>
+                                                                                            This
+                                                                                            action
+                                                                                            cannot
+                                                                                            be
+                                                                                            undone.
+                                                                                            This
+                                                                                            will
+                                                                                            permanently
+                                                                                            delete
+                                                                                            the
+                                                                                            team
+                                                                                            member.
+                                                                                        </AlertDialogDescription>
+                                                                                    </AlertDialogHeader>
+                                                                                    <AlertDialogFooter>
+                                                                                        <AlertDialogCancel>
+                                                                                            Cancel
+                                                                                        </AlertDialogCancel>
+                                                                                        <AlertDialogAction
+                                                                                            onClick={() =>
+                                                                                                handleDeleteMember(
+                                                                                                    member.id
+                                                                                                )
+                                                                                            }
+                                                                                        >
+                                                                                            Delete
+                                                                                        </AlertDialogAction>
+                                                                                    </AlertDialogFooter>
+                                                                                </AlertDialogContent>
+                                                                            </AlertDialog>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                <div className="p-6 flex-grow flex flex-col">
+                                                                    {member.userCode && (
+                                                                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                                                            {member.userCode}
+                                                                        </p>
+                                                                    )}
+                                                                    <h3 className="text-2xl font-bold text-gray-900 mb-1">
+                                                                        {member.firstName} {member.lastName}
+                                                                    </h3>
+                                                                    <p className="text-blue-600 font-semibold mb-4">
+                                                                        {member.position}
+                                                                    </p>
+                                                                    <p
+                                                                        className="text-gray-600 text-sm mb-6 leading-relaxed flex-grow"
+                                                                        style={{
+                                                                            whiteSpace:
+                                                                                "pre-line",
+                                                                        }}
+                                                                    >
+                                                                        {
+                                                                            member.bio
+                                                                        }
+                                                                    </p>
+                                                                    <div className="space-y-2 mt-auto">
+                                                                        {member.email && (
+                                                                            <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                                                                <Mail className="w-4 h-4" />
+                                                                                <span>
+                                                                                    {
+                                                                                        member.email
+                                                                                    }
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+                                                                        {member.phoneNumber && (
+                                                                            <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                                                                <Phone className="w-4 h-4" />
+                                                                                <span>
+                                                                                    {
+                                                                                        member.phoneNumber
+                                                                                    }
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+                                                                        {socialLinks.map(
+                                                                            ({
+                                                                                key,
+                                                                                label,
+                                                                                Icon,
+                                                                                url,
+                                                                            }) => (
+                                                                                <a
+                                                                                    key={`${member.id}-${key}`}
+                                                                                    href={
+                                                                                        url
+                                                                                    }
+                                                                                    target="_blank"
+                                                                                    rel="noopener noreferrer"
+                                                                                    className="flex items-center space-x-2 text-sm text-blue-600 hover:underline"
+                                                                                >
+                                                                                    <Icon className="w-4 h-4" />
+                                                                                    <span>
+                                                                                        {
+                                                                                            label
+                                                                                        }{" "}
+                                                                                        Profile
+                                                                                    </span>
+                                                                                </a>
+                                                                            )
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </motion.div>
+                                                        );
+                                                    }
+                                                )}
+                                            </div>
+                                        )}
+                                        {roleTotalPages > 1 && (
+                                            <div className="mt-8 flex justify-center items-center space-x-4">
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={() =>
+                                                        handlePageChange(
+                                                            role.key,
+                                                            rolePagination.page -
+                                                                1
+                                                        )
+                                                    }
+                                                    disabled={
+                                                        rolePagination.page ===
+                                                        1
+                                                    }
+                                                >
+                                                    <ChevronLeft className="w-4 h-4 mr-2" />
+                                                    Previous
+                                                </Button>
+                                                <span className="text-sm font-medium text-gray-700">
+                                                    Page {rolePagination.page}{" "}
+                                                    of {roleTotalPages}
+                                                </span>
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={() =>
+                                                        handlePageChange(
+                                                            role.key,
+                                                            rolePagination.page +
+                                                                1
+                                                        )
+                                                    }
+                                                    disabled={
+                                                        rolePagination.page ===
+                                                        roleTotalPages
+                                                    }
+                                                >
+                                                    Next
+                                                    <ChevronRight className="w-4 h-4 ml-2" />
+                                                </Button>
                                             </div>
                                         )}
                                     </div>
-                                    <div className="p-6 flex-grow flex flex-col">
-                                        <h3 className="text-xl font-bold text-gray-900 mb-2">
-                                            {member.firstName} {member.lastName}
-                                        </h3>
-                                        <p className="text-blue-600 font-medium mb-4">
-                                            {member.position}
-                                        </p>
-                                        <p
-                                            className="text-gray-600 text-sm mb-6 leading-relaxed flex-grow"
-                                            style={{ whiteSpace: "pre-line" }}
-                                        >
-                                            {member.bio}
-                                        </p>
-                                        <div className="space-y-2 mt-auto">
-                                            {member.email && (
-                                                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                                    <Mail className="w-4 h-4" />
-                                                    <span>{member.email}</span>
-                                                </div>
-                                            )}
-                                            {member.phoneNumber && (
-                                                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                                    <Phone className="w-4 h-4" />
-                                                    <span>
-                                                        {member.phoneNumber}
-                                                    </span>
-                                                </div>
-                                            )}
-                                            {member.linkedInProfileUrl && (
-                                                <a
-                                                    href={
-                                                        member.linkedInProfileUrl
-                                                    }
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="flex items-center space-x-2 text-sm text-blue-600 hover:underline"
-                                                >
-                                                    <Linkedin className="w-4 h-4" />
-                                                    <span>
-                                                        LinkedIn Profile
-                                                    </span>
-                                                </a>
-                                            )}
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            ))}
-                        </div>
-                    )}
-                    {totalPages > 1 && (
-                        <div className="mt-8 flex justify-center items-center space-x-4">
-                            <Button
-                                variant="outline"
-                                onClick={() =>
-                                    handlePageChange(currentPage - 1)
-                                }
-                                disabled={currentPage === 1}
-                            >
-                                <ChevronLeft className="w-4 h-4 mr-2" />
-                                Previous
-                            </Button>
-                            <span className="text-sm font-medium text-gray-700">
-                                Page {currentPage} of {totalPages}
-                            </span>
-                            <Button
-                                variant="outline"
-                                onClick={() =>
-                                    handlePageChange(currentPage + 1)
-                                }
-                                disabled={currentPage === totalPages}
-                            >
-                                Next
-                                <ChevronRight className="w-4 h-4 ml-2" />
-                            </Button>
+                                );
+                            })}
                         </div>
                     )}
                 </div>

@@ -22,6 +22,7 @@ const Navbar = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userRole, setUserRole] = useState(null);
     const [userName, setUserName] = useState("");
+    const [userAvatarUrl, setUserAvatarUrl] = useState("");
     const [mobileOpenItems, setMobileOpenItems] = useState({});
     const location = useLocation();
     const navigate = useNavigate();
@@ -29,10 +30,16 @@ const Navbar = () => {
     useEffect(() => {
         const token = sessionStorage.getItem("token");
         const role = sessionStorage.getItem("role");
+        const storedAvatar =
+            sessionStorage.getItem("profileImageUrl") ||
+            sessionStorage.getItem("profilePictureUrl");
         setIsAuthenticated(!!token);
         setUserRole(role);
         setUserName(getUserDisplayName(token));
+        setUserAvatarUrl(storedAvatar || getUserAvatarUrl(token));
     }, [location]);
+
+    const isStaffOrAdmin = ["Admin", "Staff"].includes(userRole);
 
     const handleLogout = () => {
         sessionStorage.clear();
@@ -102,14 +109,21 @@ const Navbar = () => {
             path: "/job-seekers",
             icon: Search,
             auth: "any",
+            children: [
+                {
+                    name: "All Applications",
+                    path: "/job-applications",
+                    auth: "adminOrStaff",
+                },
+            ],
         },
         {
-            name: "All Applications",
-            path: "/job-applications",
-            icon: ClipboardList,
-            auth: "adminOrStaff",
+            name: "Hire Talent",
+            path: "/contact",
+            icon: Phone,
+            auth: "any",
+            highlight: true,
         },
-        { name: "Contact", path: "/contact", icon: Phone, auth: "any" },
         {
             name: "Login/Signup",
             path: "/login",
@@ -124,6 +138,19 @@ const Navbar = () => {
     };
 
     const isChildActive = (path) => location.pathname === path;
+    const getNavItemClasses = (item, active, isMobile = false) => {
+        if (item.highlight) {
+            return active
+                ? "bg-blue-600 text-white shadow-sm ring-1 ring-blue-700/40"
+                : "bg-blue-500 text-white shadow-sm ring-1 ring-blue-700/30 hover:bg-blue-600 hover:text-white";
+        }
+
+        return active
+            ? "bg-blue-100 text-blue-700"
+            : isMobile
+              ? "text-gray-700 hover:text-blue-600 hover:bg-gray-100"
+              : "text-gray-700 hover:text-blue-600 hover:bg-gray-100";
+    };
 
     const shouldShowItem = (item) => {
         if (item.auth === "any") return true;
@@ -146,11 +173,12 @@ const Navbar = () => {
     };
 
     const accountLabel = userName || "Account";
+    const avatarFallback = getAvatarFallback(accountLabel);
 
     return (
         <nav className="bg-white shadow-lg sticky top-0 z-50">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-16">
+            <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
+                <div className="flex flex-wrap items-center gap-y-2 md:grid md:grid-cols-[auto,1fr,auto] md:gap-x-4 md:gap-y-0 md:items-center min-h-16 py-2">
                     {/* Logo */}
                     <Link to="/" className="flex items-center space-x-2">
                         <img
@@ -161,12 +189,16 @@ const Navbar = () => {
                     </Link>
 
                     {/* Desktop Navigation */}
-                    <div className="hidden md:flex items-center space-x-1">
+                    <div className="hidden md:flex flex-wrap items-center justify-center gap-x-1 gap-y-1 md:col-start-2 md:justify-self-center">
                         {navItems.map((item) => {
                             if (!shouldShowItem(item)) return null;
                             const Icon = item.icon;
 
-                            if (item.children?.length) {
+                            const visibleChildren = item.children?.length
+                                ? item.children.filter(shouldShowItem)
+                                : [];
+
+                            if (visibleChildren.length) {
                                 return (
                                     <div
                                         key={item.name}
@@ -174,11 +206,10 @@ const Navbar = () => {
                                     >
                                         <Link
                                             to={item.path}
-                                            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-1 ${
+                                            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-1 whitespace-nowrap ${getNavItemClasses(
+                                                item,
                                                 isActive(item)
-                                                    ? "bg-blue-100 text-blue-700"
-                                                    : "text-gray-700 hover:text-blue-600 hover:bg-gray-100"
-                                            }`}
+                                            )}`}
                                         >
                                             {Icon && (
                                                 <Icon className="w-4 h-4" />
@@ -187,7 +218,7 @@ const Navbar = () => {
                                             <ChevronDown className="w-4 h-4" />
                                         </Link>
                                         <div className="absolute left-0 mt-2 w-60 bg-white rounded-md shadow-lg border border-gray-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150">
-                                            {item.children.map((child) => (
+                                            {visibleChildren.map((child) => (
                                                 <div
                                                     key={child.name}
                                                     className="relative group/child"
@@ -250,39 +281,55 @@ const Navbar = () => {
                                 <Link
                                     key={item.name}
                                     to={item.path}
-                                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-1 ${
+                                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-1 whitespace-nowrap ${getNavItemClasses(
+                                        item,
                                         isActive(item)
-                                            ? "bg-blue-100 text-blue-700"
-                                            : "text-gray-700 hover:text-blue-600 hover:bg-gray-100"
-                                    }`}
+                                    )}`}
                                 >
                                     {Icon && <Icon className="w-4 h-4" />}
                                     <span>{item.name}</span>
                                 </Link>
                             );
                         })}
-                        {isAuthenticated && (
+                    </div>
+                    {isAuthenticated && (
+                        <div className="hidden md:flex items-center justify-end md:col-start-3 md:justify-self-end">
                             <div className="relative group">
                                 <button
                                     type="button"
-                                    className="px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-1 text-gray-700 hover:text-blue-600 hover:bg-gray-100"
+                                    className="px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-1 whitespace-nowrap text-gray-700 hover:text-blue-600 hover:bg-gray-100"
                                 >
+                                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-600 text-xs font-semibold overflow-hidden">
+                                        {userAvatarUrl ? (
+                                            <img
+                                                src={userAvatarUrl}
+                                                alt={accountLabel}
+                                                className="h-full w-full object-cover"
+                                            />
+                                        ) : (
+                                            <span>{avatarFallback}</span>
+                                        )}
+                                    </span>
                                     <span>{accountLabel}</span>
                                     <ChevronDown className="w-4 h-4" />
                                 </button>
                                 <div className="absolute right-0 mt-2 w-44 bg-white rounded-md shadow-lg border border-gray-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150">
-                                    <Link
-                                        to="/profile"
-                                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600"
-                                    >
-                                        Profile
-                                    </Link>
-                                    <Link
-                                        to="/profile/applications"
-                                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600"
-                                    >
-                                        My Applications
-                                    </Link>
+                                    {!isStaffOrAdmin && (
+                                        <>
+                                            <Link
+                                                to="/profile"
+                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600"
+                                            >
+                                                Profile
+                                            </Link>
+                                            <Link
+                                                to="/profile/applications"
+                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600"
+                                            >
+                                                My Applications
+                                            </Link>
+                                        </>
+                                    )}
                                     <button
                                         onClick={handleLogout}
                                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-red-600 flex items-center space-x-2"
@@ -292,8 +339,8 @@ const Navbar = () => {
                                     </button>
                                 </div>
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
 
                     {/* Mobile menu button */}
                     <div className="md:hidden">
@@ -330,11 +377,11 @@ const Navbar = () => {
                                         <Link
                                             to={item.path}
                                             onClick={() => setIsOpen(false)}
-                                            className={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 flex items-center space-x-2 ${
-                                                isActive(item)
-                                                    ? "bg-blue-100 text-blue-700"
-                                                    : "text-gray-700 hover:text-blue-600 hover:bg-gray-100"
-                                            }`}
+                                            className={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 flex items-center space-x-2 ${getNavItemClasses(
+                                                item,
+                                                isActive(item),
+                                                true
+                                            )}`}
                                         >
                                             {Icon && (
                                                 <Icon className="w-5 h-5" />
@@ -343,7 +390,9 @@ const Navbar = () => {
                                         </Link>
                                         {item.children?.length && (
                                             <div className="ml-6 mt-1 space-y-1">
-                                                {item.children.map((child) => {
+                                                {item.children
+                                                    .filter(shouldShowItem)
+                                                    .map((child) => {
                                                     const hasChildren =
                                                         child.children?.length;
                                                     const childKey = `${item.name}:${child.name}`;
@@ -449,7 +498,22 @@ const Navbar = () => {
                                         }
                                         className="w-full flex items-center justify-between px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 text-gray-700 hover:text-blue-600 hover:bg-gray-100"
                                     >
-                                        <span>{accountLabel}</span>
+                                        <span className="flex items-center space-x-2">
+                                            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-600 text-xs font-semibold overflow-hidden">
+                                                {userAvatarUrl ? (
+                                                    <img
+                                                        src={userAvatarUrl}
+                                                        alt={accountLabel}
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <span>
+                                                        {avatarFallback}
+                                                    </span>
+                                                )}
+                                            </span>
+                                            <span>{accountLabel}</span>
+                                        </span>
                                         <ChevronDown
                                             className={`w-4 h-4 transition-transform ${
                                                 mobileOpenItems.account
@@ -460,20 +524,24 @@ const Navbar = () => {
                                     </button>
                                     {mobileOpenItems.account && (
                                         <div className="ml-4 space-y-1">
-                                            <Link
-                                                to="/profile"
-                                                onClick={() => setIsOpen(false)}
-                                                className="block px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 text-gray-600 hover:text-blue-600 hover:bg-gray-100"
-                                            >
-                                                Profile
-                                            </Link>
-                                            <Link
-                                                to="/profile/applications"
-                                                onClick={() => setIsOpen(false)}
-                                                className="block px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 text-gray-600 hover:text-blue-600 hover:bg-gray-100"
-                                            >
-                                                My Applications
-                                            </Link>
+                                            {!isStaffOrAdmin && (
+                                                <>
+                                                    <Link
+                                                        to="/profile"
+                                                        onClick={() => setIsOpen(false)}
+                                                        className="block px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 text-gray-600 hover:text-blue-600 hover:bg-gray-100"
+                                                    >
+                                                        Profile
+                                                    </Link>
+                                                    <Link
+                                                        to="/profile/applications"
+                                                        onClick={() => setIsOpen(false)}
+                                                        className="block px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 text-gray-600 hover:text-blue-600 hover:bg-gray-100"
+                                                    >
+                                                        My Applications
+                                                    </Link>
+                                                </>
+                                            )}
                                             <button
                                                 onClick={() => {
                                                     handleLogout();
@@ -515,6 +583,40 @@ const getUserDisplayName = (token) => {
     } catch (error) {
         return "";
     }
+};
+
+const getUserAvatarUrl = (token) => {
+    if (!token) return "";
+    try {
+        const payload = token.split(".")[1];
+        if (!payload) return "";
+        const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+        const decoded = JSON.parse(atob(normalized));
+        return (
+            decoded.profileImageUrl ||
+            decoded.profilePictureUrl ||
+            decoded.profile_image_url ||
+            decoded.profile_picture_url ||
+            decoded.picture ||
+            decoded.avatar ||
+            decoded.image ||
+            decoded.photo ||
+            ""
+        );
+    } catch (error) {
+        return "";
+    }
+};
+
+const getAvatarFallback = (label) => {
+    if (!label) return "U";
+    const trimmed = label.trim();
+    if (!trimmed) return "U";
+    const parts = trimmed.split(/\s+/).filter(Boolean);
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (
+        (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase() || "U"
+    );
 };
 
 export default Navbar;
