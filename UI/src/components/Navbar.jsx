@@ -153,7 +153,7 @@ const Navbar = () => {
     };
 
     const shouldShowItem = (item) => {
-        if (item.auth === "any") return true;
+        if (!item.auth || item.auth === "any") return true;
         if (item.auth === "unauthenticated" && !isAuthenticated) return true;
         if (item.auth === "authenticated" && isAuthenticated) return true;
         if (
